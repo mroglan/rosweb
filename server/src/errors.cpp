@@ -6,13 +6,13 @@
 namespace rosweb {
     namespace errors {
         void show_critical_error(const std::string& msg) {
-            std::cerr << "ROSWEB CRITICAL ERROR:\n";
-            std::cerr << msg << '\n';
+            std::cerr << "\033[1;31m" << "ROSWEB CRITICAL ERROR:\n";
+            std::cerr << msg << "\033[0m\n";
         }
 
         void show_noncritical_error(const std::string& msg) {
-            std::cerr << "ROSWEB ERROR:\n";
-            std::cerr << msg << '\n';
+            std::cerr << "\033[1;31m" << "ROSWEB ERROR:\n";
+            std::cerr << msg << "\033[0m\n";
         }
     }
 }
