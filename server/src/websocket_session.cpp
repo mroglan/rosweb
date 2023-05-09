@@ -16,10 +16,18 @@ rosweb::websocket_session::websocket_session(std::shared_ptr<rosweb::bridge> bri
     tcp::socket&& socket)
     : m_bridge{std::move(bridge)}, m_ws{std::move(socket)} {}
 
+rosweb::websocket_session::~websocket_session() {
+    std::cout << "God bless the weak_ptr. Memory leaks no more!\n";
+}
+
 void rosweb::websocket_session::run() {
     std::lock_guard<std::mutex> guard{m_mutex};
 
     m_ws.async_accept(beast::bind_front_handler(&rosweb::websocket_session::on_accept, shared_from_this()));
+}
+
+bool rosweb::websocket_session::is_closed() {
+    return m_session_closed;
 }
 
 void rosweb::websocket_session::on_accept(beast::error_code ec) {
@@ -41,7 +49,8 @@ void rosweb::websocket_session::on_read(beast::error_code ec, std::size_t bytes_
     std::unique_lock<std::mutex> lock{m_mutex};
 
     if (ec == websocket::error::closed) {
-        rosweb::errors::show_critical_error("Websocket connection closed.");
+        rosweb::errors::show_noncritical_error("Websocket connection closed. Will attempt to reconnect.");
+        m_session_closed = true;
         m_buffer.clear();
         return;
     }
@@ -58,5 +67,7 @@ void rosweb::websocket_session::on_read(beast::error_code ec, std::size_t bytes_
     m_buffer.clear();
     lock.unlock();
 
-    m_bridge->handle_incoming_ws_msg(msg);
+    auto bridge = m_bridge.lock();
+
+    bridge->handle_incoming_ws_msg(msg);
 }

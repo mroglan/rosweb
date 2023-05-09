@@ -24,6 +24,7 @@ namespace rosweb {
             boost::asio::ip::tcp::acceptor m_acceptor;
             std::shared_ptr<rosweb::websocket_session> m_session;
 
+            void accept();
             void on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket);
     };
 }
