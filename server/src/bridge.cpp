@@ -3,6 +3,7 @@
 
 #include "../include/bridge.h"
 #include "../include/websocket_session.h"
+#include "../include/client_requests.h"
 #include "../include/errors.h"
 #include "../include/json.hpp"
 
@@ -13,7 +14,8 @@ using tcp = boost::asio::ip::tcp;
 using json = nlohmann::json_abi_v3_11_2::json;
 
 rosweb::bridge::bridge() 
-    : m_ioc{1}, m_acceptor{m_ioc, {net::ip::make_address("127.0.0.1"), 8083}} {}
+    : m_ioc{1}, m_acceptor{m_ioc, {net::ip::make_address("127.0.0.1"), 8083}},
+     m_client_request_handler{new rosweb::client_requests::client_request_handler} {}
 
 void rosweb::bridge::run() {
     accept();
@@ -53,7 +55,12 @@ void rosweb::bridge::handle_incoming_ws_msg(const std::string& msg) {
             throw rosweb::errors::message_parse_error("No \"type\" field found on incoming message.");
         }
 
-        std::cout << j["type"] << '\n';
+        if (j["type"] == "request") {
+            m_client_request_handler->handle_incoming_request(j);
+        } else {
+            throw rosweb::errors::message_parse_error("Only acceptable incoming message type is "
+                "\"request\"");
+        }
     } catch (const nlohmann::json_abi_v3_11_2::detail::parse_error& e) {
         rosweb::errors::show_noncritical_error("Error JSON parsing websocket message.");
     } catch (const rosweb::errors::message_parse_error& e) {
