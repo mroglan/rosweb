@@ -23,6 +23,8 @@ namespace rosweb {
             
             void run();
 
+            void read();
+
         private:
             std::mutex m_mutex;
             std::condition_variable m_cv; 
@@ -34,6 +36,8 @@ namespace rosweb {
             bool m_is_writing{false};
 
             void on_accept(boost::beast::error_code ec);
+
+            void on_read(boost::beast::error_code ec, std::size_t bytes_transferred);
     };
 }
 

@@ -16,6 +16,8 @@ namespace rosweb {
 
             void run();
 
+            void handle_incoming_ws_msg(const std::string& msg);
+
         private:
 
             boost::asio::io_context m_ioc;         

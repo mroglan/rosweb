@@ -28,3 +28,8 @@ void rosweb::bridge::on_accept(beast::error_code ec, tcp::socket socket) {
     m_session = std::make_shared<rosweb::websocket_session>(shared_from_this(), std::move(socket));
     m_session->run();
 }
+
+void rosweb::bridge::handle_incoming_ws_msg(const std::string& msg) {
+    std::cout << "Message: " << msg << '\n';
+    m_session->read();
+}

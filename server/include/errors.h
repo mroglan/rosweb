@@ -7,6 +7,8 @@
 namespace rosweb {
     namespace errors {
         void show_critical_error(const std::string& msg);
+
+        void show_noncritical_error(const std::string& msg);
     }
 }
 
