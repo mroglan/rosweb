@@ -19,10 +19,14 @@ namespace rosweb {
             struct create_subscriber_request : client_request {
                 std::string topic_name; 
                 std::string msg_type;
+
+                ~create_subscriber_request();
             };
 
             class client_request_handler {
                 public:
+                    ~client_request_handler();
+
                     void handle_incoming_request(nlohmann::json_abi_v3_11_2::json& j);
                 
                 private:

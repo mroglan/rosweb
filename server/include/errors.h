@@ -12,14 +12,16 @@ namespace rosweb {
 
         class message_parse_error : public std::exception {
             public:
-                message_parse_error(char* msg);
+                message_parse_error(const std::string& msg);
+                
+                message_parse_error(std::string& msg);
 
-                char* what();
+                const char* what();
 
                 void show() const;
             
             private:
-                char* m_msg;
+                std::string m_msg;
         };
     }
 }

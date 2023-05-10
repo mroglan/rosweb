@@ -4,10 +4,12 @@
 #include <memory>
 #include <boost/beast/core.hpp>
 
-#include "./client_requests.h"
 
 namespace rosweb {
     class websocket_session;
+    namespace client_requests {
+        class client_request_handler;
+    }
 }
 
 namespace rosweb {
@@ -15,6 +17,8 @@ namespace rosweb {
 
         public:
             bridge();
+
+            ~bridge();
 
             void run();
 

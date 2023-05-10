@@ -8,6 +8,8 @@
 
 using json = nlohmann::json_abi_v3_11_2::json;
 
+rosweb::client_requests::client_request_handler::~client_request_handler() {}
+
 void rosweb::client_requests::client_request_handler::handle_incoming_request(json& j) {
 
     try {
@@ -48,3 +50,5 @@ void rosweb::client_requests::client_request_handler::handle_incoming_subscriber
 }
 
 rosweb::client_requests::client_request::~client_request() {}
+
+rosweb::client_requests::create_subscriber_request::~create_subscriber_request() {}
