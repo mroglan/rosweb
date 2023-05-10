@@ -18,7 +18,6 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
 }
 
 void rosweb::ros_session::timer_callback() {
-    std::cout << "Acknowleding request\n";
     handle_new_request();
 
     for (const auto& w : m_sub_wrappers) {
@@ -46,8 +45,9 @@ void rosweb::ros_session::handle_new_request() {
 void rosweb::ros_session::create_subscriber(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
 
-    std::cout << "creating subscriber\n";
     auto data = static_cast<const rosweb::client_requests::create_subscriber_request*>(req_handler->get_data());
+
+    std::cout << "Creating subscriber to " << data->topic_name << '\n';
 
     if (data->msg_type == "sensor_msgs/msg/Image") {
         m_sub_wrappers.insert({data->topic_name, sub_wrapper<sensor_msgs::msg::Image>{this,data->topic_name}});
@@ -57,7 +57,7 @@ void rosweb::ros_session::create_subscriber(
 void rosweb::ros_session::destroy_subscriber(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
     
-    std::cout << "destroying subscriber\n";
+    std::cout << "Destroying subscriber\n";
     m_sub_wrappers.erase(
         static_cast<const rosweb::client_requests::destroy_subscriber_request*>
         (req_handler->get_data())->topic_name);

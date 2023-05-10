@@ -64,8 +64,6 @@ void rosweb::client_requests::client_request_handler::handle_incoming_subscriber
     data->topic_name = j["data"]["topic_name"];
 
     m_data = std::unique_ptr<rosweb::client_requests::create_subscriber_request>(data);
-
-    std::cout << "Added Data!\n";
 }
 
 void rosweb::client_requests::client_request_handler::handle_incoming_destroy_subscriber_request(json& j) {
@@ -83,8 +81,6 @@ void rosweb::client_requests::client_request_handler::handle_incoming_destroy_su
     data->topic_name = j["data"]["topic_name"];
 
     m_data = std::unique_ptr<rosweb::client_requests::destroy_subscriber_request>(data);
-
-    std::cout << "Added Data!\n";
 }
 
 rosweb::client_requests::client_request::~client_request() {}

@@ -44,7 +44,6 @@ namespace rosweb {
                     std::shared_ptr<T> m_data;
 
                     void topic_callback(const std::shared_ptr<T> msg) {
-                        std::cout << "Got ROS data\n";
                         m_data = std::move(msg);
                     }
             };
