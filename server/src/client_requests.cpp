@@ -4,6 +4,7 @@
 
 #include "../include/client_requests.h"
 #include "../include/errors.h"
+#include "../include/supported_ros_types.h"
 #include "../include/json.hpp"
 
 using json = nlohmann::json_abi_v3_11_2::json;
@@ -24,6 +25,8 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
             throw rosweb::errors::message_parse_error("No valid operation field value provided for client request.");
         }
     } catch (const rosweb::errors::message_parse_error& e) {
+        e.show();
+    } catch (const rosweb::errors::request_error& e) {
         e.show();
     }
 }
@@ -52,6 +55,7 @@ void rosweb::client_requests::client_request_handler::handle_incoming_subscriber
     if (j["data"]["msg_type"] == nullptr) {
         throw rosweb::errors::message_parse_error("Missing required field data.msg_type.");
     }
+    rosweb::supported_ros_types::verify_is_supported_msg(j["data"]["msg_type"]);
 
     std::unique_lock<std::mutex> lock{m_mutex};
     m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});

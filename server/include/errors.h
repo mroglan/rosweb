@@ -10,11 +10,9 @@ namespace rosweb {
 
         void show_noncritical_error(const std::string& msg);
 
-        class message_parse_error : public std::exception {
+        class base_error : public std::exception {
             public:
-                message_parse_error(const std::string& msg);
-                
-                message_parse_error(std::string& msg);
+                base_error(const std::string& msg);
 
                 const char* what();
 
@@ -22,6 +20,20 @@ namespace rosweb {
             
             private:
                 std::string m_msg;
+        };
+
+        class message_parse_error : public base_error {
+            public:
+                message_parse_error(const std::string& msg);
+
+                void show() const;
+        };
+
+        class request_error : public base_error {
+            public:
+                request_error(const std::string& msg);
+
+                void show() const;
         };
     }
 }
