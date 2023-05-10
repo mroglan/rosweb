@@ -49,8 +49,7 @@ namespace rosweb {
                     }
             };
 
-            // why does this now work with unique_ptr???
-            std::map<std::string, boost::variant<sub_wrapper<sensor_msgs::msg::Image>*>> m_sub_wrappers;
+            std::map<std::string, boost::variant<boost::recursive_wrapper<sub_wrapper<sensor_msgs::msg::Image>>>> m_sub_wrappers;
 
             std::shared_ptr<rosweb::bridge> m_bridge;
 
