@@ -70,3 +70,8 @@ void rosweb::bridge::handle_incoming_ws_msg(const std::string& msg) {
     }
     m_session->read();
 }
+
+std::shared_ptr<rosweb::client_requests::client_request_handler> 
+    rosweb::bridge::get_client_request_handler() {
+    return m_client_request_handler;
+}
