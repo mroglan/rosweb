@@ -33,6 +33,16 @@ void rosweb::client_requests::client_request_handler::acknowledge() {
     m_cv.notify_one();
 }
 
+bool rosweb::client_requests::client_request_handler::is_acknowledged() const {
+    std::lock_guard<std::mutex> guard{m_mutex};
+    return m_acknowledged;
+}
+
+const rosweb::client_requests::client_request* 
+    rosweb::client_requests::client_request_handler::get_data() const {
+    return m_data.get();
+}
+
 void rosweb::client_requests::client_request_handler::handle_incoming_subscriber_request(json& j) {
     if (j["data"]["topic_name"] == nullptr) {
         throw rosweb::errors::message_parse_error("Missing required field data.topic_name.");

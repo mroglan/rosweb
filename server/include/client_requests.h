@@ -30,9 +30,13 @@ namespace rosweb {
                     void handle_incoming_request(nlohmann::json_abi_v3_11_2::json& j);
 
                     void acknowledge();
+
+                    bool is_acknowledged() const;
+
+                    const client_request* get_data() const;
                 
                 private:
-                    std::mutex m_mutex;
+                    mutable std::mutex m_mutex;
                     std::condition_variable m_cv;
 
                     bool m_acknowledged{true};
