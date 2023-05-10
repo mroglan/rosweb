@@ -1,8 +1,10 @@
 #include <memory>
 #include <iostream>
 #include <map>
+#include <boost/variant.hpp>
 
 #include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/image.hpp"
 
 namespace rosweb {
     class bridge;
@@ -30,6 +32,10 @@ namespace rosweb {
                         );
                     }
 
+                    const std::string& get_topic_name() const {
+                        return m_topic_name;
+                    };
+
                 private:
                     std::string m_topic_name;
 
@@ -43,13 +49,16 @@ namespace rosweb {
                     }
             };
 
-            std::map<std::string, void*> m_sub_wrappers;
+            // why does this now work with unique_ptr???
+            std::map<std::string, boost::variant<sub_wrapper<sensor_msgs::msg::Image>*>> m_sub_wrappers;
 
             std::shared_ptr<rosweb::bridge> m_bridge;
 
             rclcpp::TimerBase::SharedPtr m_timer;
 
             void timer_callback();
+
+            void handle_new_request();
 
             void create_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler);

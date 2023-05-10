@@ -1,6 +1,7 @@
 #include <memory>
 #include <chrono>
 #include <iostream>
+#include <boost/variant.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -18,7 +19,18 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
 
 void rosweb::ros_session::timer_callback() {
     std::cout << "Acknowleding request\n";
+    handle_new_request();
 
+    for (const auto& w : m_sub_wrappers) {
+        std::cout << w.first << '\n';
+        if (w.second.which() == 0) {
+            std::cout << "From Boost: "
+            << boost::get<sub_wrapper<sensor_msgs::msg::Image>*>(w.second)->get_topic_name() << '\n';
+        }
+    }
+}
+
+void rosweb::ros_session::handle_new_request() {
     auto req_handler = m_bridge->get_client_request_handler();
     if (req_handler->is_acknowledged()) return;
 
@@ -31,12 +43,12 @@ void rosweb::ros_session::timer_callback() {
 
 void rosweb::ros_session::create_subscriber(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
+
     std::cout << "creating subscriber\n";
     auto data = static_cast<const rosweb::client_requests::create_subscriber_request*>(req_handler->get_data());
 
-    void* wrapper;
     if (data->msg_type == "sensor_msgs/msg/Image") {
-        wrapper = new sub_wrapper<sensor_msgs::msg::Image>{this, data->topic_name};
+        auto wrapper = new sub_wrapper<sensor_msgs::msg::Image>{this, data->topic_name};
+        m_sub_wrappers.insert({data->topic_name, wrapper});
     }
-    m_sub_wrappers.insert({data->topic_name, wrapper});
 }
