@@ -8,6 +8,7 @@
 #include "../include/ros_session.h"
 #include "../include/bridge.h"
 #include "../include/client_requests.h"
+#include "../include/errors.h"
 
 rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
     : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)} {
@@ -33,10 +34,14 @@ void rosweb::ros_session::handle_new_request() {
     auto req_handler = m_bridge->get_client_request_handler();
     if (req_handler->is_acknowledged()) return;
 
-    if (req_handler->get_data()->operation == "create_subscriber") {
-        create_subscriber(req_handler);
-    } else if (req_handler->get_data()->operation == "destroy_subscriber") {
-        destroy_subscriber(req_handler);
+    try {
+        if (req_handler->get_data()->operation == "create_subscriber") {
+            create_subscriber(req_handler);
+        } else if (req_handler->get_data()->operation == "destroy_subscriber") {
+            destroy_subscriber(req_handler);
+        }
+    } catch (const rosweb::errors::request_error& e) {
+        e.show();
     }
 
     req_handler->acknowledge();
@@ -47,6 +52,10 @@ void rosweb::ros_session::create_subscriber(
 
     auto data = static_cast<const rosweb::client_requests::create_subscriber_request*>(req_handler->get_data());
 
+    if (m_sub_wrappers.find(data->topic_name) != m_sub_wrappers.end()) {
+        throw rosweb::errors::request_error("Subscription to " + data->topic_name + " already exists.");
+    }
+
     std::cout << "Creating subscriber to " << data->topic_name << '\n';
 
     if (data->msg_type == "sensor_msgs/msg/Image") {
@@ -56,9 +65,14 @@ void rosweb::ros_session::create_subscriber(
 
 void rosweb::ros_session::destroy_subscriber(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
+
+    std::string topic_name = static_cast<const rosweb::client_requests::destroy_subscriber_request*>
+        (req_handler->get_data())->topic_name;
     
-    std::cout << "Destroying subscriber\n";
-    m_sub_wrappers.erase(
-        static_cast<const rosweb::client_requests::destroy_subscriber_request*>
-        (req_handler->get_data())->topic_name);
+    if (m_sub_wrappers.find(topic_name) == m_sub_wrappers.end()) {
+        throw rosweb::errors::request_error("No subscription to " + topic_name + " to destroy.");
+    }
+    
+    std::cout << "Destroying subscriber to " << topic_name << '\n';
+    m_sub_wrappers.erase(topic_name);
 }
