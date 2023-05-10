@@ -36,6 +36,8 @@ void rosweb::ros_session::handle_new_request() {
 
     if (req_handler->get_data()->operation == "create_subscriber") {
         create_subscriber(req_handler);
+    } else if (req_handler->get_data()->operation == "destroy_subscriber") {
+        destroy_subscriber(req_handler);
     }
 
     req_handler->acknowledge();
@@ -48,8 +50,15 @@ void rosweb::ros_session::create_subscriber(
     auto data = static_cast<const rosweb::client_requests::create_subscriber_request*>(req_handler->get_data());
 
     if (data->msg_type == "sensor_msgs/msg/Image") {
-        // auto wrapper = new sub_wrapper<sensor_msgs::msg::Image>{this, data->topic_name};
-        // m_sub_wrappers.insert({data->topic_name, wrapper});
         m_sub_wrappers.insert({data->topic_name, sub_wrapper<sensor_msgs::msg::Image>{this,data->topic_name}});
     }
+}
+
+void rosweb::ros_session::destroy_subscriber(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
+    
+    std::cout << "destroying subscriber\n";
+    m_sub_wrappers.erase(
+        static_cast<const rosweb::client_requests::destroy_subscriber_request*>
+        (req_handler->get_data())->topic_name);
 }

@@ -23,6 +23,12 @@ namespace rosweb {
                 ~create_subscriber_request();
             };
 
+            struct destroy_subscriber_request : client_request {
+                std::string topic_name;
+
+                ~destroy_subscriber_request();
+            };
+
             class client_request_handler {
                 public:
                     ~client_request_handler();
@@ -43,6 +49,8 @@ namespace rosweb {
                     std::unique_ptr<client_request> m_data;
 
                     void handle_incoming_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
+
+                    void handle_incoming_destroy_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
             };
     }
 }

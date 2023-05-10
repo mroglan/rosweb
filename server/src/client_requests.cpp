@@ -18,6 +18,8 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
         }
         if (j["operation"] == "create_subscriber") {
             handle_incoming_subscriber_request(j);
+        } else if (j["operation"] == "destroy_subscriber") {
+            handle_incoming_destroy_subscriber_request(j);
         } else {
             throw rosweb::errors::message_parse_error("No valid operation field value provided for client request.");
         }
@@ -52,7 +54,7 @@ void rosweb::client_requests::client_request_handler::handle_incoming_subscriber
     }
 
     std::unique_lock<std::mutex> lock{m_mutex};
-    m_cv.wait(lock, [this]{return m_acknowledged;});
+    m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
 
     m_acknowledged = false;
 
@@ -66,6 +68,27 @@ void rosweb::client_requests::client_request_handler::handle_incoming_subscriber
     std::cout << "Added Data!\n";
 }
 
+void rosweb::client_requests::client_request_handler::handle_incoming_destroy_subscriber_request(json& j) {
+    if (j["data"]["topic_name"] == nullptr) {
+        throw rosweb::errors::message_parse_error("Missing required field data.topic_name.");
+    }
+
+    std::unique_lock<std::mutex> lock{m_mutex};
+    m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
+
+    m_acknowledged = false;
+
+    auto data = new rosweb::client_requests::destroy_subscriber_request;
+    data->operation = j["operation"];
+    data->topic_name = j["data"]["topic_name"];
+
+    m_data = std::unique_ptr<rosweb::client_requests::destroy_subscriber_request>(data);
+
+    std::cout << "Added Data!\n";
+}
+
 rosweb::client_requests::client_request::~client_request() {}
 
 rosweb::client_requests::create_subscriber_request::~create_subscriber_request() {}
+
+rosweb::client_requests::destroy_subscriber_request::~destroy_subscriber_request() {}

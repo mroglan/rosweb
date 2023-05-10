@@ -60,6 +60,11 @@ namespace rosweb {
             void handle_new_request();
 
             void create_subscriber(
-                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler);
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler
+            );
+            
+            void destroy_subscriber(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler
+            );
     };
 }
