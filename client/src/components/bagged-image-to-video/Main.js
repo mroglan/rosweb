@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { Box, Grid, TextField, Typography } from "@mui/material";
+import { Box, Checkbox, FormControlLabel, Grid, TextField, Typography } from "@mui/material";
 import { BluePrimaryButton } from "../misc/buttons";
 import { ReadyState } from 'react-use-websocket'
 
@@ -8,6 +8,7 @@ export default function Main({ws}) {
     const [outputName, setOutputName] = useState('')
     const [bagPath, setBagPath] = useState('')
     const [topicName, setTopicName] = useState('')
+    const [createHTML, setCreateHTML] = useState(true)
     const [loading, setLoading] = useState(false)
 
     const handleOutputNameChange = (e) => {
@@ -22,6 +23,10 @@ export default function Main({ws}) {
         setTopicName(e.target.value)
     }
 
+    const handleCreateHTMLChange = (e) => {
+        setCreateHTML(e.target.checked)
+    }
+
     const handleConvert = (e) => {
         if (ws.readyState != ReadyState.OPEN) return;
 
@@ -33,7 +38,8 @@ export default function Main({ws}) {
             data: {
                 output_name: outputName || 'rosweb-output',
                 bag_path: bagPath,
-                topic_name: topicName
+                topic_name: topicName,
+                create_html: createHTML
             }
         }
 
@@ -108,6 +114,10 @@ export default function Main({ws}) {
                             </Box>
                         </Grid>
                     </Grid>
+                </Box>
+                <Box mt={3}>
+                    <FormControlLabel label="Create HTML file to view video" 
+                        control={<Checkbox checked={createHTML} onChange={handleCreateHTMLChange} />} />
                 </Box>
                 <Box mt={6}>
                     <BluePrimaryButton sx={{minWidth: 200}} onClick={handleConvert}
