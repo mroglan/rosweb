@@ -1,6 +1,7 @@
 #include <memory>
 #include <chrono>
 #include <iostream>
+#include <fstream>
 #include <boost/variant.hpp>
 
 #include "rclcpp/rclcpp.hpp"
@@ -90,13 +91,15 @@ void rosweb::ros_session::bagged_image_to_video(
     auto data = static_cast<const rosweb::client_requests::bagged_image_to_video_request*>
         (req_handler->get_data());
     
+    if (!getenv("HOME")) {
+        rosweb::errors::show_noncritical_error("No HOME directory found, cannot convert" 
+            "ROS bag to video.");
+        return;
+    }
+
+    std::string home_dir{getenv("HOME")};
+    
     try {
-        if (!getenv("HOME")) {
-            throw std::runtime_error{"No HOME directory found."};
-        }
-
-        std::string home_dir{getenv("HOME")};
-
         rclcpp::Serialization<sensor_msgs::msg::Image> serialization;
 
         rosbag2_cpp::Reader reader;
@@ -130,9 +133,43 @@ void rosweb::ros_session::bagged_image_to_video(
         }
 
         out.release();
+
         std::cout << "Created video from ROS bag!\n";
+
     } catch (const std::exception& e) {
         rosweb::errors::show_noncritical_error("Failed to convert ROS bag to video.");
         std::cout << e.what() << '\n';
+        return;
+    }
+
+    try {
+        if (data->create_html) {
+            std::string file_path = home_dir + "/Downloads/" + data->output_name + + ".html";
+
+            std::ofstream ofs;
+            ofs.open(file_path, std::ofstream::out | std::ofstream::trunc);
+            ofs << "<html>\n";
+            ofs << "<head>\n";
+            ofs << "<title>" << data->output_name << "</title>\n";
+            ofs << "</head>\n";
+            ofs << "<body>\n";
+            ofs << "<div style=\"text-align:center;\">\n";
+            ofs << "<h1>" << data->output_name << "</h1>\n";
+            ofs << "<video src=\"" << home_dir << "/Downloads/" << data->output_name << ".mp4\" controls />\n";
+            ofs << "</div>\n";
+            ofs << "</body>\n";
+            ofs << "</html>\n";
+
+            ofs.close();
+
+            std::cout << "Created HTML to view video!\n";
+
+            std::string command = "open " + file_path;
+            system(command.c_str());
+        }
+    } catch (const std::exception& e) {
+        rosweb::errors::show_noncritical_error("Failed to create HTML to view video.");
+        std::cout << e.what() << '\n';
+        return;
     }
 }

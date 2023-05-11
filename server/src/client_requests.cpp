@@ -110,6 +110,7 @@ void rosweb::client_requests::client_request_handler::handle_incoming_bagged_ima
     data->output_name = j["data"]["output_name"];
     data->bag_path = j["data"]["bag_path"];
     data->topic_name = j["data"]["topic_name"];
+    data->create_html = j["data"]["create_html"];
 
     m_data = std::unique_ptr<rosweb::client_requests::bagged_image_to_video_request>(data);
 }

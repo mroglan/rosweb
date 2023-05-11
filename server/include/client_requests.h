@@ -33,6 +33,7 @@ namespace rosweb {
                 std::string output_name;
                 std::string bag_path;
                 std::string topic_name;
+                bool create_html;
 
                 ~bagged_image_to_video_request();
             };
