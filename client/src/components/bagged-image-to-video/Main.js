@@ -26,6 +26,18 @@ export default function Main({ws}) {
         if (ws.readyState != ReadyState.OPEN) return;
 
         setLoading(true)
+
+        const req = {
+            type: "request",
+            operation: "bagged_image_to_video",
+            data: {
+                outputName: outputName || 'rosweb-output',
+                bagPath,
+                topicName
+            }
+        }
+
+        ws.sendMessage(JSON.stringify(req))
     }
 
     return (
@@ -35,7 +47,7 @@ export default function Main({ws}) {
                     <Grid container alignItems="center">
                         <Grid item>
                             <Typography variant="h6">
-                                Bag Directory
+                                Bag Path
                             </Typography>
                         </Grid>
                         <Grid item>
