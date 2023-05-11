@@ -17,8 +17,10 @@ export default function App() {
 	})
 
 	useMemo(() => {
-		console.log('readyState', ws.readyState)
-	}, [ws.readyState])
+		// TODO: 
+		// reset anything in the ros_session
+		console.log('reloaded application')
+	}, [])
 
 	return (
 		<BrowserRouter>
@@ -32,7 +34,7 @@ export default function App() {
 			</Box>
 			<Routes>
 				<Route path="/" element={<Home />} />
-				<Route path="/bagged-image-to-video" element={<BaggedImageToVideo />} />
+				<Route path="/bagged-image-to-video" element={<BaggedImageToVideo ws={ws} />} />
 			</Routes>	
 		</BrowserRouter>
 	)

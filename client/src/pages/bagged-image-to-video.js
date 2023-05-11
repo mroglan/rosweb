@@ -1,15 +1,18 @@
-import { Box, Container } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
+import Main from '../components/bagged-image-to-video/Main'
 
-export default function BaggedImageToVideo() {
+export default function BaggedImageToVideo({ws}) {
 
     return (
         <Box>
             <Container maxWidth="md">
                 <Box mt={3} textAlign="center">
-                    Bagged Image to Video
+                    <Typography variant="h4">
+                        Bagged Image to Video
+                    </Typography>
                 </Box>
                 <Box mt={3}>
-                    stuff
+                    <Main ws={ws} />
                 </Box>
             </Container>
         </Box>
