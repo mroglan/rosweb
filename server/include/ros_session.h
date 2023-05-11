@@ -1,3 +1,6 @@
+#ifndef ROSWEB_ROS_SESSION_H
+#define ROSWEB_ROS_SESSION_H
+
 #include <memory>
 #include <iostream>
 #include <map>
@@ -71,3 +74,5 @@ namespace rosweb {
             );
     };
 }
+
+#endif

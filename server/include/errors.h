@@ -1,5 +1,5 @@
 #ifndef ROSWEB_ERRORS_H
-#define ROSWEB_ERRORS
+#define ROSWEB_ERRORS_H
 
 #include <iostream>
 #include <string>

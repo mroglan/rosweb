@@ -2,6 +2,7 @@
 #define ROSWEB_WEBSOCKET_SESSION_H
 
 #include <memory>
+#include <queue>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -36,6 +37,8 @@ namespace rosweb {
             std::weak_ptr<rosweb::bridge> m_bridge;
             boost::beast::websocket::stream<boost::beast::tcp_stream> m_ws;
             boost::beast::flat_buffer m_buffer;
+
+            std::queue<std::string> pending_writes;
 
             bool m_is_writing{false};
             bool m_session_closed{false};

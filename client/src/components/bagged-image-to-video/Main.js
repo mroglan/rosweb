@@ -28,7 +28,7 @@ export default function Main({ws}) {
     }
 
     const handleConvert = (e) => {
-        if (ws.readyState != ReadyState.OPEN) return;
+        if (ws.readyState != ReadyState.OPEN) return
 
         setLoading(true)
 
@@ -45,6 +45,13 @@ export default function Main({ws}) {
 
         ws.sendMessage(JSON.stringify(req))
     }
+
+    useMemo(() => {
+        if (ws.readyState != ReadyState.OPEN) return
+
+        console.log(ws.lastMessage.data)
+
+    }, [ws.lastMessage])
 
     return (
         <Box mt={3}>

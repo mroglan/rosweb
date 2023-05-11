@@ -1,3 +1,6 @@
+#ifndef ROSWEB_ROS_SUPPORTED_TYPES_H
+#define ROSWEB_ROS_SUPPORTED_TYPES_H
+
 #include <set>
 #include <string>
 
@@ -9,3 +12,5 @@ namespace rosweb {
         void verify_is_supported_msg(const std::string& msg);
     }
 }
+
+#endif
