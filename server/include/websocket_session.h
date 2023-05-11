@@ -46,7 +46,6 @@ namespace rosweb {
             boost::asio::deadline_timer m_write_timer;
             std::queue<std::string> m_pending_writes;
 
-            bool m_is_writing{false};
             bool m_session_closed{false};
 
             void on_accept(boost::beast::error_code ec);

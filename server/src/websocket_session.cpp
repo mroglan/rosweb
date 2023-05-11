@@ -94,15 +94,11 @@ void rosweb::websocket_session::write_next_pending() {
 
     std::lock_guard<std::mutex> guard{m_mutex};
 
-    if (m_is_writing) return;
-
     if (m_pending_writes.empty()) {
         m_write_timer.expires_from_now(boost::posix_time::milliseconds(100));
         m_write_timer.async_wait(boost::bind(&websocket_session::write_next_pending, shared_from_this()));
         return;
     }
-
-    m_is_writing = true;
 
     m_ws.async_write(net::buffer(m_pending_writes.front()), 
         beast::bind_front_handler(&websocket_session::on_write, shared_from_this()));
@@ -114,7 +110,6 @@ void rosweb::websocket_session::on_write(beast::error_code ec, std::size_t bytes
     std::unique_lock<std::mutex> lock{m_mutex};
 
     m_pending_writes.pop();
-    m_is_writing = false; 
 
     lock.unlock();
 
