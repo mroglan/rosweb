@@ -31,9 +31,9 @@ export default function Main({ws}) {
             type: "request",
             operation: "bagged_image_to_video",
             data: {
-                outputName: outputName || 'rosweb-output',
-                bagPath,
-                topicName
+                output_name: outputName || 'rosweb-output',
+                bag_path: bagPath,
+                topic_name: topicName
             }
         }
 
