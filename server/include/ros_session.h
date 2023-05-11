@@ -65,5 +65,9 @@ namespace rosweb {
             void destroy_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler
             );
+
+            void bagged_image_to_video(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler
+            );
     };
 }

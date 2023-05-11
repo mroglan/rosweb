@@ -4,7 +4,12 @@
 #include <boost/variant.hpp>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/serialization.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "cv_bridge/cv_bridge.h"
+#include "opencv2/opencv.hpp"
+#include "rosbag2_cpp/reader.hpp"
+
 #include "../include/ros_session.h"
 #include "../include/bridge.h"
 #include "../include/client_requests.h"
@@ -13,7 +18,7 @@
 rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
     : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)} {
     m_timer = create_wall_timer(
-        std::chrono::milliseconds{500}, 
+        std::chrono::milliseconds{100}, 
         std::bind(&rosweb::ros_session::timer_callback, this)
     );
 }
@@ -39,6 +44,8 @@ void rosweb::ros_session::handle_new_request() {
             create_subscriber(req_handler);
         } else if (req_handler->get_data()->operation == "destroy_subscriber") {
             destroy_subscriber(req_handler);
+        } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
+            bagged_image_to_video(req_handler);
         }
     } catch (const rosweb::errors::request_error& e) {
         e.show();
@@ -75,4 +82,57 @@ void rosweb::ros_session::destroy_subscriber(
     
     std::cout << "Destroying subscriber to " << topic_name << '\n';
     m_sub_wrappers.erase(topic_name);
+}
+
+void rosweb::ros_session::bagged_image_to_video(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
+
+    auto data = static_cast<const rosweb::client_requests::bagged_image_to_video_request*>
+        (req_handler->get_data());
+    
+    try {
+        if (!getenv("HOME")) {
+            throw std::runtime_error{"No HOME directory found."};
+        }
+
+        std::string home_dir{getenv("HOME")};
+
+        rclcpp::Serialization<sensor_msgs::msg::Image> serialization;
+
+        rosbag2_cpp::Reader reader;
+        reader.open(home_dir + '/' + data->bag_path);
+
+        sensor_msgs::msg::Image::SharedPtr ros_msg = std::make_shared<sensor_msgs::msg::Image>();
+
+        std::vector<cv_bridge::CvImagePtr> cv_ptrs;
+        
+        while (reader.has_next()) {
+            auto msg = reader.read_next();
+
+            if (msg->topic_name != data->topic_name) continue;
+
+            rclcpp::SerializedMessage extracted_serialized_msg(*msg->serialized_data);
+            serialization.deserialize_message(&extracted_serialized_msg, ros_msg.get());
+
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(ros_msg, "rgb8");
+            
+            cv_ptrs.push_back(cv_ptr);
+        }
+
+        reader.close();
+
+        cv::VideoWriter out(home_dir + "/Downloads/" + data->output_name + ".mp4", 
+            cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 
+            10.0, cv_ptrs[0]->image.size());
+        
+        for (const cv_bridge::CvImagePtr& cv_ptr : cv_ptrs) {
+            out.write(cv_ptr->image);
+        }
+
+        out.release();
+        std::cout << "Created video from ROS bag!\n";
+    } catch (const std::exception& e) {
+        rosweb::errors::show_noncritical_error("Failed to convert ROS bag to video.");
+        std::cout << e.what() << '\n';
+    }
 }

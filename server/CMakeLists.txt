@@ -15,9 +15,10 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
 
 include_directories( ${Boost_INCLUDE_DIRS} include )
 file(GLOB SOURCES "src/*.cpp")
 
 add_executable(server ${SOURCES} )
-ament_target_dependencies(server rclcpp sensor_msgs cv_bridge OpenCV)
+ament_target_dependencies(server rclcpp rosbag2_cpp sensor_msgs cv_bridge OpenCV)
