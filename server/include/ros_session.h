@@ -14,6 +14,9 @@ namespace rosweb {
     namespace client_requests {
         class client_request_handler;
     }
+    namespace server_responses {
+        class standard;
+    }
 }
 
 namespace rosweb {
@@ -59,7 +62,7 @@ namespace rosweb {
 
             void timer_callback();
 
-            void handle_new_request();
+            void handle_new_request(rosweb::server_responses::standard& res);
 
             void create_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler

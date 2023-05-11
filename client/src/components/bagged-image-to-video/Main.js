@@ -49,7 +49,7 @@ export default function Main({ws}) {
     useMemo(() => {
         if (ws.readyState != ReadyState.OPEN) return
 
-        console.log(ws.lastMessage.data)
+        // console.log(ws.lastMessage.data)
 
     }, [ws.lastMessage])
 

@@ -15,6 +15,10 @@
 #include "../include/bridge.h"
 #include "../include/client_requests.h"
 #include "../include/errors.h"
+#include "../include/server_responses.h"
+#include "../include/json.hpp"
+
+using json = nlohmann::json_abi_v3_11_2::json;
 
 rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
     : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)} {
@@ -25,7 +29,9 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
 }
 
 void rosweb::ros_session::timer_callback() {
-    handle_new_request();
+    rosweb::server_responses::standard res;
+    handle_new_request(res);
+    std::cout << "Response: " << res.stringify() << '\n';
 
     for (const auto& w : m_sub_wrappers) {
         std::cout << w.first << '\n';
@@ -36,7 +42,7 @@ void rosweb::ros_session::timer_callback() {
     }
 }
 
-void rosweb::ros_session::handle_new_request() {
+void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard& res) {
     auto req_handler = m_bridge->get_client_request_handler();
     if (req_handler->is_acknowledged()) return;
 
@@ -48,7 +54,15 @@ void rosweb::ros_session::handle_new_request() {
         } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
             bagged_image_to_video(req_handler);
         }
+        // TEMPORARY
+        res.set_operation(req_handler->get_data()->operation);
+        res.set_status(200);
+        res.set_msg("Operation successful");
     } catch (const rosweb::errors::request_error& e) {
+        // TEMPORARY
+        res.set_operation(req_handler->get_data()->operation);
+        res.set_status(500);
+        res.set_msg("Operation failed");
         e.show();
     }
 

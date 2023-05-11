@@ -38,7 +38,7 @@ namespace rosweb {
             boost::beast::websocket::stream<boost::beast::tcp_stream> m_ws;
             boost::beast::flat_buffer m_buffer;
 
-            std::queue<std::string> pending_writes;
+            std::queue<std::string> m_pending_writes;
 
             bool m_is_writing{false};
             bool m_session_closed{false};
