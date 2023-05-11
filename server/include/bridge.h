@@ -2,6 +2,8 @@
 #define ROSWEB_BRIDGE_H
 
 #include <memory>
+#include <vector>
+#include <string>
 #include <boost/beast/core.hpp>
 
 
@@ -23,6 +25,8 @@ namespace rosweb {
             void run();
 
             void handle_incoming_ws_msg(const std::string& msg);
+
+            void handle_outgoing_ws_msgs(const std::vector<std::string>& msgs);
 
             std::shared_ptr<rosweb::client_requests::client_request_handler> get_client_request_handler();
 

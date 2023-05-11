@@ -1,4 +1,6 @@
 #include <memory>
+#include <string>
+#include <vector>
 #include <thread>
 #include <mutex>
 #include <boost/beast/core.hpp>
@@ -10,6 +12,7 @@
 
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
+namespace net = boost::asio;
 using tcp = boost::asio::ip::tcp;
 
 rosweb::websocket_session::websocket_session(std::shared_ptr<rosweb::bridge> bridge, 
@@ -27,6 +30,8 @@ void rosweb::websocket_session::run() {
 }
 
 bool rosweb::websocket_session::is_closed() {
+    std::lock_guard<std::mutex> guard{m_mutex};
+
     return m_session_closed;
 }
 
@@ -70,4 +75,37 @@ void rosweb::websocket_session::on_read(beast::error_code ec, std::size_t bytes_
     auto bridge = m_bridge.lock();
 
     bridge->handle_incoming_ws_msg(msg);
+}
+
+void rosweb::websocket_session::write_many(const std::vector<std::string>& msgs) {
+    std::unique_lock<std::mutex> lock{m_mutex};
+
+    for (const auto& msg : msgs) {
+        m_pending_writes.push(msg);
+    }
+    lock.unlock();
+
+    write_next_pending();
+}
+
+void rosweb::websocket_session::write_next_pending() {
+    std::lock_guard<std::mutex> guard{m_mutex};
+
+    if (m_is_writing) return;
+
+    if (m_pending_writes.empty()) return;
+
+    m_is_writing = true;
+
+    m_ws.async_write(net::buffer(m_pending_writes.front()), 
+        beast::bind_front_handler(&websocket_session::on_write, shared_from_this()));
+
+    m_pending_writes.pop();
+}
+
+void rosweb::websocket_session::on_write(beast::error_code ec, std::size_t bytes_transferred) {
+    std::unique_lock<std::mutex> lock{m_mutex};
+    m_is_writing = false; 
+    lock.unlock();
+    write_next_pending();
 }

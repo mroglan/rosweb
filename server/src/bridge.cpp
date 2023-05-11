@@ -1,4 +1,6 @@
 #include <memory>
+#include <string>
+#include <vector>
 #include <boost/beast/core.hpp>
 
 #include "../include/bridge.h"
@@ -69,6 +71,13 @@ void rosweb::bridge::handle_incoming_ws_msg(const std::string& msg) {
         e.show();
     }
     m_session->read();
+}
+
+void rosweb::bridge::handle_outgoing_ws_msgs(const std::vector<std::string>& msgs) {
+    if (!m_session.get()) return;
+    if (m_session->is_closed()) return;
+
+    m_session->write_many(msgs);
 }
 
 std::shared_ptr<rosweb::client_requests::client_request_handler> 

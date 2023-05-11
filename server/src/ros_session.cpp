@@ -1,4 +1,6 @@
 #include <memory>
+#include <string>
+#include <vector>
 #include <chrono>
 #include <iostream>
 #include <fstream>
@@ -29,9 +31,14 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
 }
 
 void rosweb::ros_session::timer_callback() {
+    std::vector<std::string> msgs;
+
     rosweb::server_responses::standard res;
     handle_new_request(res);
-    std::cout << "Response: " << res.stringify() << '\n';
+
+    if (!!res) {
+        msgs.push_back(res.stringify());
+    }
 
     for (const auto& w : m_sub_wrappers) {
         std::cout << w.first << '\n';
@@ -40,6 +47,8 @@ void rosweb::ros_session::timer_callback() {
             << boost::get<sub_wrapper<sensor_msgs::msg::Image>>(w.second).get_topic_name() << '\n';
         }
     }
+
+    m_bridge->handle_outgoing_ws_msgs(msgs);
 }
 
 void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard& res) {

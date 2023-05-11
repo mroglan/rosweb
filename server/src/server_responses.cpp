@@ -31,3 +31,7 @@ json rosweb::server_responses::standard::json() {
 std::string rosweb::server_responses::standard::stringify() {
     return json().dump();
 }
+
+bool rosweb::server_responses::standard::operator!() const {
+    return m_operation.empty();
+}

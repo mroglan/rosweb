@@ -5,6 +5,8 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <vector>
+#include <string>
 #include <condition_variable>
 
 #include <boost/beast/core.hpp>
@@ -28,6 +30,8 @@ namespace rosweb {
 
             void read();
 
+            void write_many(const std::vector<std::string>& msgs);
+
             bool is_closed();
 
         private:
@@ -46,6 +50,10 @@ namespace rosweb {
             void on_accept(boost::beast::error_code ec);
 
             void on_read(boost::beast::error_code ec, std::size_t bytes_transferred);
+
+            void write_next_pending();
+
+            void on_write(boost::beast::error_code ec, std::size_t bytes_transferred);
     };
 }
 

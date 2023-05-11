@@ -18,6 +18,8 @@ namespace rosweb {
                 nlohmann::json_abi_v3_11_2::json json();
 
                 std::string stringify();
+
+                bool operator!() const;
             
             private:
                 std::string m_operation;
