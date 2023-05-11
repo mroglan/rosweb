@@ -19,9 +19,7 @@ using tcp = boost::asio::ip::tcp;
 rosweb::websocket_session::websocket_session(std::shared_ptr<rosweb::bridge> bridge, 
     tcp::socket&& socket, net::io_context& ioc)
     : m_bridge{std::move(bridge)}, m_ws{std::move(socket)}, 
-    m_write_timer{ioc, boost::posix_time::milliseconds(100)} {
-    m_write_timer.async_wait(boost::bind(&websocket_session::write_next_pending, this));
-}
+    m_write_timer{ioc, boost::posix_time::milliseconds(100)} {}
 
 rosweb::websocket_session::~websocket_session() {
     std::cout << "God bless the weak_ptr. Memory leaks no more!\n";
@@ -30,6 +28,7 @@ rosweb::websocket_session::~websocket_session() {
 void rosweb::websocket_session::run() {
     std::lock_guard<std::mutex> guard{m_mutex};
 
+    m_write_timer.async_wait(boost::bind(&websocket_session::write_next_pending, shared_from_this()));
     m_ws.async_accept(beast::bind_front_handler(&rosweb::websocket_session::on_accept, shared_from_this()));
 }
 
@@ -99,7 +98,7 @@ void rosweb::websocket_session::write_next_pending() {
 
     if (m_pending_writes.empty()) {
         m_write_timer.expires_from_now(boost::posix_time::milliseconds(100));
-        m_write_timer.async_wait(boost::bind(&websocket_session::write_next_pending, this));
+        m_write_timer.async_wait(boost::bind(&websocket_session::write_next_pending, shared_from_this()));
         return;
     }
 
