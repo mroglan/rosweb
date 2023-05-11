@@ -36,11 +36,11 @@ void rosweb::bridge::on_accept(beast::error_code ec, tcp::socket socket) {
         rosweb::errors::show_noncritical_error("Error accepting socket connection. Will retry.");
     } else if (!m_session.get()) {
         std::cout << "Accepted socket connection.\n";
-        m_session = std::make_shared<rosweb::websocket_session>(shared_from_this(), std::move(socket));
+        m_session = std::make_shared<rosweb::websocket_session>(shared_from_this(), std::move(socket), m_ioc);
         m_session->run();
     } else if (m_session->is_closed()) {
         std::cout << "Reestablished socket connection.\n";
-        m_session = std::make_shared<rosweb::websocket_session>(shared_from_this(), std::move(socket));
+        m_session = std::make_shared<rosweb::websocket_session>(shared_from_this(), std::move(socket), m_ioc);
         m_session->run();
     } else {
         rosweb::errors::show_noncritical_error("Already connected to an active session. " 
@@ -77,7 +77,7 @@ void rosweb::bridge::handle_outgoing_ws_msgs(const std::vector<std::string>& msg
     if (!m_session.get()) return;
     if (m_session->is_closed()) return;
 
-    m_session->write_many(msgs);
+    m_session->queue_messages(msgs);
 }
 
 std::shared_ptr<rosweb::client_requests::client_request_handler> 

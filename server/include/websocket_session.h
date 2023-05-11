@@ -11,6 +11,7 @@
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/asio.hpp>
 
 namespace rosweb {
     class bridge;
@@ -22,7 +23,7 @@ namespace rosweb {
 
         public:
             websocket_session(std::shared_ptr<rosweb::bridge> bridge, 
-                boost::asio::ip::tcp::socket&& socket);
+                boost::asio::ip::tcp::socket&& socket, boost::asio::io_context& ioc);
 
             ~websocket_session();
             
@@ -30,7 +31,7 @@ namespace rosweb {
 
             void read();
 
-            void write_many(const std::vector<std::string>& msgs);
+            void queue_messages(const std::vector<std::string>& msgs);
 
             bool is_closed();
 
@@ -42,6 +43,7 @@ namespace rosweb {
             boost::beast::websocket::stream<boost::beast::tcp_stream> m_ws;
             boost::beast::flat_buffer m_buffer;
 
+            boost::asio::deadline_timer m_write_timer;
             std::queue<std::string> m_pending_writes;
 
             bool m_is_writing{false};
