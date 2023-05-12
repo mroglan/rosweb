@@ -11,6 +11,8 @@ export default function Main({ws}) {
     const [createHTML, setCreateHTML] = useState(true)
     const [loading, setLoading] = useState(false)
 
+    const [res, setRes] = useState({error: true, msg: ''})
+
     const handleOutputNameChange = (e) => {
         setOutputName(e.target.value)
     }
@@ -49,8 +51,16 @@ export default function Main({ws}) {
     useMemo(() => {
         if (ws.readyState != ReadyState.OPEN) return
 
-        // console.log(ws.lastMessage.data)
+        if (!ws.lastMessage) return
 
+        console.log(ws.lastMessage.data)
+
+        const msg = JSON.parse(ws.lastMessage.data)
+
+        if (msg.type !== 'response' || msg.operation !== 'bagged_image_to_video') return
+
+        setRes({error: msg.data.status !== 200, msg: msg.data.msg})
+        setLoading(false)
     }, [ws.lastMessage])
 
     return (
@@ -126,12 +136,17 @@ export default function Main({ws}) {
                     <FormControlLabel label="Create HTML file to view video" 
                         control={<Checkbox checked={createHTML} onChange={handleCreateHTMLChange} />} />
                 </Box>
-                <Box mt={6}>
+                {res.msg && <Box mt={6}>
+                    <Typography variant="h6" color={res.error ? "error.main" : "success.main"}>
+                        {res.msg}
+                    </Typography>
+                </Box>}
+                {res.error && <Box mt={6}>
                     <BluePrimaryButton sx={{minWidth: 200}} onClick={handleConvert}
                         disabled={loading}>
                         Convert
                     </BluePrimaryButton>
-                </Box>
+                </Box>}
             </Box>
         </Box>
     )     
