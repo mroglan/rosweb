@@ -25,6 +25,7 @@ namespace rosweb {
 
             struct destroy_subscriber_request : client_request {
                 std::string topic_name;
+                std::string msg_type;
 
                 ~destroy_subscriber_request();
             };

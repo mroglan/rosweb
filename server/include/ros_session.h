@@ -30,8 +30,9 @@ namespace rosweb {
             class sub_wrapper {
                 public:
 
-                    sub_wrapper(rclcpp::Node* node, const std::string& topic_name)
-                        : m_topic_name{topic_name} {
+                    sub_wrapper(rclcpp::Node* node, const std::string& topic_name,
+                        const std::string& msg_type)
+                        : m_topic_name{topic_name}, m_msg_type{msg_type} {
                         m_sub = node->create_subscription<T>(
                             topic_name, 10, 
                             std::bind(&sub_wrapper<T>::topic_callback, this, std::placeholders::_1)
@@ -42,8 +43,13 @@ namespace rosweb {
                         return m_topic_name;
                     };
 
+                    const std::string& get_msg_type() const {
+                        return m_msg_type;
+                    }
+
                 private:
                     std::string m_topic_name;
+                    std::string m_msg_type;
 
                     std::shared_ptr<rclcpp::Subscription<T>> m_sub;
 
@@ -54,6 +60,7 @@ namespace rosweb {
                     }
             };
 
+
             std::map<std::string, boost::variant<boost::recursive_wrapper<sub_wrapper<sensor_msgs::msg::Image>>>> m_sub_wrappers;
 
             std::shared_ptr<rosweb::bridge> m_bridge;
@@ -62,21 +69,21 @@ namespace rosweb {
 
             void timer_callback();
 
-            void handle_new_request(rosweb::server_responses::standard* res);
+            void handle_new_request(rosweb::server_responses::standard*& res);
 
             void create_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
-                rosweb::server_responses::standard* res
+                rosweb::server_responses::standard*& res
             );
             
             void destroy_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
-                rosweb::server_responses::standard* res
+                rosweb::server_responses::standard*& res
             );
 
             void bagged_image_to_video(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
-                rosweb::server_responses::standard* res
+                rosweb::server_responses::standard*& res
             );
     };
 }

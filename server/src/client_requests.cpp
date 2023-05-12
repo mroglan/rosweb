@@ -76,6 +76,9 @@ void rosweb::client_requests::client_request_handler::handle_incoming_destroy_su
     if (j["data"]["topic_name"] == nullptr) {
         throw rosweb::errors::request_error("Missing required field data.topic_name.");
     }
+    if (j["data"]["msg_type"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.msg_type.");
+    }
 
     std::unique_lock<std::mutex> lock{m_mutex};
     m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
@@ -84,6 +87,7 @@ void rosweb::client_requests::client_request_handler::handle_incoming_destroy_su
 
     auto data = new rosweb::client_requests::destroy_subscriber_request;
     data->operation = j["operation"];
+    data->msg_type = j["data"]["msg_type"];
     data->topic_name = j["data"]["topic_name"];
 
     m_data = std::unique_ptr<rosweb::client_requests::destroy_subscriber_request>(data);

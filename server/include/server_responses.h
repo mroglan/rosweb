@@ -28,6 +28,21 @@ namespace rosweb {
                 int m_status;
                 std::string m_msg;
         };
+
+        class create_or_destroy_sub : public standard {
+            public:
+                ~create_or_destroy_sub();
+
+                void set_topic_name(const std::string& topic_name);
+
+                void set_msg_type(const std::string& msg_type);
+
+                std::string stringify() const override;
+            
+            private:
+                std::string m_topic_name;
+                std::string m_msg_type;
+        };
     }
 }
 

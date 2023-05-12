@@ -52,11 +52,10 @@ void rosweb::ros_session::timer_callback() {
     m_bridge->handle_outgoing_ws_msgs(msgs);
 }
 
-void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard* res) {
+void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*& res) {
     auto req_handler = m_bridge->get_client_request_handler();
     if (req_handler->is_acknowledged()) return;
 
-    res->set_operation(req_handler->get_data()->operation);
     if (req_handler->get_data()->operation == "create_subscriber") {
         create_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "destroy_subscriber") {
@@ -64,15 +63,22 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
     } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
         bagged_image_to_video(req_handler, res);
     }
+    res->set_operation(req_handler->get_data()->operation);
 
     req_handler->acknowledge();
 }
 
 void rosweb::ros_session::create_subscriber(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
-    rosweb::server_responses::standard* res) {
+    rosweb::server_responses::standard*& res) {
+
+    delete res;
+    res = new rosweb::server_responses::create_or_destroy_sub;
 
     auto data = static_cast<const rosweb::client_requests::create_subscriber_request*>(req_handler->get_data());
+
+    static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_topic_name(data->topic_name);
+    static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_msg_type(data->msg_type);
 
     if (m_sub_wrappers.find(data->topic_name) != m_sub_wrappers.end()) {
         res->set_status(400);
@@ -82,9 +88,9 @@ void rosweb::ros_session::create_subscriber(
     }
 
     std::cout << "Creating subscriber to " << data->topic_name << '\n';
-
     if (data->msg_type == "sensor_msgs/msg/Image") {
-        m_sub_wrappers.insert({data->topic_name, sub_wrapper<sensor_msgs::msg::Image>{this,data->topic_name}});
+        m_sub_wrappers.insert({data->topic_name, 
+            sub_wrapper<sensor_msgs::msg::Image>{this,data->topic_name, data->msg_type}});
     }
     res->set_status(200);
     res->set_msg("Successfully created subscription.");
@@ -92,20 +98,25 @@ void rosweb::ros_session::create_subscriber(
 
 void rosweb::ros_session::destroy_subscriber(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
-    rosweb::server_responses::standard* res) {
+    rosweb::server_responses::standard*& res) {
 
-    std::string topic_name = static_cast<const rosweb::client_requests::destroy_subscriber_request*>
-        (req_handler->get_data())->topic_name;
+    delete res;
+    res = new rosweb::server_responses::create_or_destroy_sub;
+
+    auto data = static_cast<const rosweb::client_requests::destroy_subscriber_request*>(req_handler->get_data());
+
+    static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_topic_name(data->topic_name);
+    static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_msg_type(data->msg_type);
     
-    if (m_sub_wrappers.find(topic_name) == m_sub_wrappers.end()) {
+    if (m_sub_wrappers.find(data->topic_name) == m_sub_wrappers.end()) {
         res->set_status(400);
         res->set_msg("No subscription to destroy.");
-        rosweb::errors::request_error("No subscription to " + topic_name + " to destroy.").show();
+        rosweb::errors::request_error("No subscription to " + data->topic_name + " to destroy.").show();
         return;
     } 
     
-    std::cout << "Destroying subscriber to " << topic_name << '\n';
-    m_sub_wrappers.erase(topic_name);
+    std::cout << "Destroying subscriber to " << data->topic_name << '\n';
+    m_sub_wrappers.erase(data->topic_name);
 
     res->set_status(200);
     res->set_msg("Successfully destroyed subscription.");
@@ -113,7 +124,7 @@ void rosweb::ros_session::destroy_subscriber(
 
 void rosweb::ros_session::bagged_image_to_video(
     const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
-    rosweb::server_responses::standard* res) {
+    rosweb::server_responses::standard*& res) {
     
     auto data = static_cast<const rosweb::client_requests::bagged_image_to_video_request*>
         (req_handler->get_data());
