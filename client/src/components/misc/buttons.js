@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button } from '@mui/material'
+import { Button, IconButton } from '@mui/material'
 import { styled } from '@mui/material/styles'
 
 export const BluePrimaryButton = styled(Button)(({theme}) => ({
@@ -21,5 +21,13 @@ export const BlueDensePrimaryButton = styled(Button)(({theme}) => ({
     transition: 'background 300ms',
     '&:hover': {
         background: theme.palette.primary.dark
+    }
+}))
+
+export const BluePrimaryIconButton = styled(IconButton)(({theme}) => ({
+    color: theme.palette.primary.main,
+    transition: 'color 300ms',
+    '&:hover': {
+        color: theme.palette.primary.dark
     }
 }))

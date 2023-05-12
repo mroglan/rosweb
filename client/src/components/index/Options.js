@@ -2,7 +2,8 @@ import { Box, Paper, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 const options = [
-    {name: 'Bagged Image to Video', link: '/bagged-image-to-video'}
+    {name: 'Bagged Image to Video', link: '/bagged-image-to-video'},
+    {name: 'Color Filter', link: '/color-filter'}
 ].sort((a,b) => a.name.localeCompare(b.name))
 
 export default function Options() {
