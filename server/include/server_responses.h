@@ -9,15 +9,17 @@ namespace rosweb {
 
         class standard {
             public:
+                virtual ~standard();
+
                 void set_operation(const std::string& operation);
 
                 void set_status(int status);
 
                 void set_msg(const std::string& msg);
 
-                nlohmann::json_abi_v3_11_2::json json();
+                nlohmann::json_abi_v3_11_2::json json() const;
 
-                std::string stringify();
+                virtual std::string stringify() const;
 
                 bool operator!() const;
             

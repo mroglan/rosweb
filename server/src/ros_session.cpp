@@ -33,12 +33,13 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
 void rosweb::ros_session::timer_callback() {
     std::vector<std::string> msgs;
 
-    rosweb::server_responses::standard res;
+    auto res = new rosweb::server_responses::standard;
     handle_new_request(res);
 
-    if (!!res) {
-        msgs.push_back(res.stringify());
+    if (!!*res) {
+        msgs.push_back(res->stringify());
     }
+    delete res;
 
     for (const auto& w : m_sub_wrappers) {
         std::cout << w.first << '\n';
@@ -51,40 +52,33 @@ void rosweb::ros_session::timer_callback() {
     m_bridge->handle_outgoing_ws_msgs(msgs);
 }
 
-void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard& res) {
+void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard* res) {
     auto req_handler = m_bridge->get_client_request_handler();
     if (req_handler->is_acknowledged()) return;
 
-    try {
-        if (req_handler->get_data()->operation == "create_subscriber") {
-            create_subscriber(req_handler);
-        } else if (req_handler->get_data()->operation == "destroy_subscriber") {
-            destroy_subscriber(req_handler);
-        } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
-            bagged_image_to_video(req_handler);
-        }
-        // TEMPORARY
-        res.set_operation(req_handler->get_data()->operation);
-        res.set_status(200);
-        res.set_msg("Operation successful");
-    } catch (const rosweb::errors::request_error& e) {
-        // TEMPORARY
-        res.set_operation(req_handler->get_data()->operation);
-        res.set_status(500);
-        res.set_msg("Operation failed");
-        e.show();
+    res->set_operation(req_handler->get_data()->operation);
+    if (req_handler->get_data()->operation == "create_subscriber") {
+        create_subscriber(req_handler, res);
+    } else if (req_handler->get_data()->operation == "destroy_subscriber") {
+        destroy_subscriber(req_handler, res);
+    } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
+        bagged_image_to_video(req_handler, res);
     }
 
     req_handler->acknowledge();
 }
 
 void rosweb::ros_session::create_subscriber(
-    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard* res) {
 
     auto data = static_cast<const rosweb::client_requests::create_subscriber_request*>(req_handler->get_data());
 
     if (m_sub_wrappers.find(data->topic_name) != m_sub_wrappers.end()) {
-        throw rosweb::errors::request_error("Subscription to " + data->topic_name + " already exists.");
+        res->set_status(400);
+        res->set_msg("Subscription already exists.");
+        rosweb::errors::request_error("Subscription to " + data->topic_name + " already exists.").show();
+        return;
     }
 
     std::cout << "Creating subscriber to " << data->topic_name << '\n';
@@ -92,29 +86,41 @@ void rosweb::ros_session::create_subscriber(
     if (data->msg_type == "sensor_msgs/msg/Image") {
         m_sub_wrappers.insert({data->topic_name, sub_wrapper<sensor_msgs::msg::Image>{this,data->topic_name}});
     }
+    res->set_status(200);
+    res->set_msg("Successfully created subscription.");
 }
 
 void rosweb::ros_session::destroy_subscriber(
-    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard* res) {
 
     std::string topic_name = static_cast<const rosweb::client_requests::destroy_subscriber_request*>
         (req_handler->get_data())->topic_name;
     
     if (m_sub_wrappers.find(topic_name) == m_sub_wrappers.end()) {
-        throw rosweb::errors::request_error("No subscription to " + topic_name + " to destroy.");
-    }
+        res->set_status(400);
+        res->set_msg("No subscription to destroy.");
+        rosweb::errors::request_error("No subscription to " + topic_name + " to destroy.").show();
+        return;
+    } 
     
     std::cout << "Destroying subscriber to " << topic_name << '\n';
     m_sub_wrappers.erase(topic_name);
+
+    res->set_status(200);
+    res->set_msg("Successfully destroyed subscription.");
 }
 
 void rosweb::ros_session::bagged_image_to_video(
-    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler) {
-
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard* res) {
+    
     auto data = static_cast<const rosweb::client_requests::bagged_image_to_video_request*>
         (req_handler->get_data());
     
     if (!getenv("HOME")) {
+        res->set_status(500);
+        res->set_msg("Unable to find HOME directory.");
         rosweb::errors::show_noncritical_error("No HOME directory found, cannot convert" 
             "ROS bag to video.");
         return;
@@ -159,7 +165,10 @@ void rosweb::ros_session::bagged_image_to_video(
 
         std::cout << "Created video from ROS bag!\n";
 
+        res->set_status(200);
     } catch (const std::exception& e) {
+        res->set_status(500);
+        res->set_msg("Failed to create video. See full error in server terminal.");
         rosweb::errors::show_noncritical_error("Failed to convert ROS bag to video.");
         std::cout << e.what() << '\n';
         return;
@@ -189,8 +198,15 @@ void rosweb::ros_session::bagged_image_to_video(
 
             std::string command = "open " + file_path;
             system(command.c_str());
+
+            res->set_msg("Video and HTML file created! If the HTML was not opened in a browser "
+                "automatically, you can find it in your Downloads.");
+        } else {
+            res->set_msg("Video created!");
         }
     } catch (const std::exception& e) {
+        res->set_msg("Video created, but failed to create HTML file. See full error in "
+        "server terminal.");
         rosweb::errors::show_noncritical_error("Failed to create HTML to view video.");
         std::cout << e.what() << '\n';
         return;

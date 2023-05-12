@@ -17,7 +17,7 @@ void rosweb::server_responses::standard::set_status(int status) {
     m_status = status;
 }
 
-json rosweb::server_responses::standard::json() {
+json rosweb::server_responses::standard::json() const {
     nlohmann::json_abi_v3_11_2::json j;
 
     j["type"] = "response";
@@ -28,10 +28,12 @@ json rosweb::server_responses::standard::json() {
     return j;
 }
 
-std::string rosweb::server_responses::standard::stringify() {
+std::string rosweb::server_responses::standard::stringify() const {
     return json().dump();
 }
 
 bool rosweb::server_responses::standard::operator!() const {
     return m_operation.empty();
 }
+
+rosweb::server_responses::standard::~standard() {}
