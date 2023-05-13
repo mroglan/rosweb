@@ -14,9 +14,13 @@ namespace rosweb {
             public:
                 base_error(const std::string& msg);
 
+                virtual ~base_error();
+
                 const char* what();
 
-                void show() const;
+                const std::string& get_msg() const;
+
+                virtual void show() const;
             
             private:
                 std::string m_msg;
@@ -26,14 +30,18 @@ namespace rosweb {
             public:
                 message_parse_error(const std::string& msg);
 
-                void show() const;
+                ~message_parse_error();
+
+                void show() const override;
         };
 
         class request_error : public base_error {
             public:
                 request_error(const std::string& msg);
 
-                void show() const;
+                ~request_error();
+
+                void show() const override;
         };
     }
 }

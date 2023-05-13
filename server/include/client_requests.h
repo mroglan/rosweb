@@ -8,6 +8,10 @@
 #include "./json.hpp"
 
 namespace rosweb {
+    class websocket_session;
+}
+
+namespace rosweb {
     namespace client_requests {
 
             struct client_request {
@@ -43,7 +47,8 @@ namespace rosweb {
                 public:
                     ~client_request_handler();
 
-                    void handle_incoming_request(nlohmann::json_abi_v3_11_2::json& j);
+                    void handle_incoming_request(nlohmann::json_abi_v3_11_2::json& j,
+                        std::shared_ptr<rosweb::websocket_session> session);
 
                     void acknowledge();
 

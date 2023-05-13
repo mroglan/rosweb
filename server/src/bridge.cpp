@@ -60,7 +60,7 @@ void rosweb::bridge::handle_incoming_ws_msg(const std::string& msg) {
         }
 
         if (j["type"] == "request") {
-            m_client_request_handler->handle_incoming_request(j);
+            m_client_request_handler->handle_incoming_request(j, m_session);
         } else {
             throw rosweb::errors::message_parse_error("Only acceptable incoming message type is "
                 "\"request\"");

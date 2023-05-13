@@ -6,17 +6,23 @@
 #include "../include/errors.h"
 #include "../include/supported_ros_types.h"
 #include "../include/json.hpp"
+#include "../include/websocket_session.h"
+#include "../include/server_responses.h"
 
 using json = nlohmann::json_abi_v3_11_2::json;
 
 rosweb::client_requests::client_request_handler::~client_request_handler() {}
 
-void rosweb::client_requests::client_request_handler::handle_incoming_request(json& j) {
+void rosweb::client_requests::client_request_handler::handle_incoming_request(json& j,
+    std::shared_ptr<rosweb::websocket_session> session) {
+
+    rosweb::server_responses::standard res;
 
     try {
         if (j["operation"] == nullptr) {
             throw rosweb::errors::message_parse_error("Operation field missing for client request.");
         }
+        res.set_operation(j["operation"]);
         if (j["operation"] == "create_subscriber") {
             handle_incoming_subscriber_request(j);
         } else if (j["operation"] == "destroy_subscriber") {
@@ -26,9 +32,10 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
         } else {
             throw rosweb::errors::message_parse_error("No valid operation field value provided for client request.");
         }
-    } catch (const rosweb::errors::message_parse_error& e) {
-        e.show();
-    } catch (const rosweb::errors::request_error& e) {
+    } catch (const rosweb::errors::base_error& e) {
+        res.set_status(400);
+        res.set_msg(e.get_msg());
+        session->queue_messages({res.stringify()});
         e.show();
     }
 }
