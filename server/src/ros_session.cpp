@@ -18,12 +18,14 @@
 #include "../include/client_requests.h"
 #include "../include/errors.h"
 #include "../include/server_responses.h"
+#include "../include/server_stream.h"
 #include "../include/json.hpp"
 
 using json = nlohmann::json_abi_v3_11_2::json;
 
 rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
-    : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)} {
+    : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)}, 
+    m_stream{new rosweb::server_stream} {
     m_timer = create_wall_timer(
         std::chrono::milliseconds{100}, 
         std::bind(&rosweb::ros_session::timer_callback, this)
@@ -44,8 +46,8 @@ void rosweb::ros_session::timer_callback() {
     for (const auto& w : m_sub_wrappers) {
         std::cout << w.first << '\n';
         if (w.second.which() == 0) {
-            std::cout << "From Boost: "
-            << boost::get<sub_wrapper<sensor_msgs::msg::Image>>(w.second).get_topic_name() << '\n';
+            m_stream->add_msg(w.first, 
+                boost::get<sub_wrapper<sensor_msgs::msg::Image>>(w.second).get_data());
         }
     }
 

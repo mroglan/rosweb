@@ -8,6 +8,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "./server_stream.h"
 
 namespace rosweb {
     class bridge;
@@ -47,6 +48,10 @@ namespace rosweb {
                         return m_msg_type;
                     }
 
+                    const T* get_data() const {
+                        return m_data.get();
+                    }
+
                 private:
                     std::string m_topic_name;
                     std::string m_msg_type;
@@ -66,6 +71,8 @@ namespace rosweb {
             std::shared_ptr<rosweb::bridge> m_bridge;
 
             rclcpp::TimerBase::SharedPtr m_timer;
+
+            std::unique_ptr<rosweb::server_stream> m_stream;
 
             void timer_callback();
 
