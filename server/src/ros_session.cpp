@@ -43,7 +43,7 @@ void rosweb::ros_session::timer_callback() {
     }
     delete res;
 
-    for (auto& w : m_image_data) {
+    for (auto& w : m_sub_wrapper.image_data) {
         std::cout << w.first << '\n';
         if (!w.second) continue;
         std::cout << w.second->header.frame_id << '\n';
@@ -94,7 +94,7 @@ void rosweb::ros_session::create_subscriber(
     static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_msg_type(data->msg_type);
 
     // TODO CHANGE CHANGE CHANGE
-    if (m_image_subs.find(data->topic_name) != m_image_subs.end()) {
+    if (m_sub_wrapper.types.find(data->topic_name) != m_sub_wrapper.types.end()) {
         res->set_status(400);
         res->set_msg("Subscription already exists.");
         rosweb::errors::request_error("Subscription to " + data->topic_name + " already exists.").show();
@@ -121,7 +121,7 @@ void rosweb::ros_session::destroy_subscriber(
     static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_msg_type(data->msg_type);
     
     // TODO CHANGE CHANGE CHANGE
-    if (m_image_subs.find(data->topic_name) == m_image_subs.end()) {
+    if (m_sub_wrapper.types.find(data->topic_name) == m_sub_wrapper.types.end()) {
         res->set_status(400);
         res->set_msg("No subscription to destroy.");
         rosweb::errors::request_error("No subscription to " + data->topic_name + " to destroy.").show();
@@ -129,8 +129,7 @@ void rosweb::ros_session::destroy_subscriber(
     } 
     
     std::cout << "Destroying subscriber to " << data->topic_name << '\n';
-    m_image_subs.erase(data->topic_name);
-    m_image_data.erase(data->topic_name);
+    destroy_sub_helper(data->topic_name, data->msg_type);
 
     res->set_status(200);
     res->set_msg("Successfully destroyed subscription.");
@@ -151,7 +150,7 @@ void rosweb::ros_session::change_subscriber(
     r->set_msg_type(data->msg_type);
 
     // TODO CHANGE CHANGE CHANGE
-    if (m_image_subs.find(data->new_topic_name) != m_image_subs.end()) {
+    if (m_sub_wrapper.types.find(data->new_topic_name) != m_sub_wrapper.types.end()) {
         r->set_status(400);
         r->set_msg("Subscription already exists.");
         rosweb::errors::request_error("Subscription to " + data->new_topic_name + " already exists.").show();
@@ -159,7 +158,7 @@ void rosweb::ros_session::change_subscriber(
     }
 
     // TODO CHANGE CHANGE CHANGE
-    if (m_image_subs.find(data->prev_topic_name) == m_image_subs.end()) {
+    if (m_sub_wrapper.types.find(data->prev_topic_name) == m_sub_wrapper.types.end()) {
         r->set_status(400);
         r->set_msg("No subscription to destroy.");
         rosweb::errors::request_error("No subscription to " + data->prev_topic_name + " to destroy.").show();
@@ -172,7 +171,7 @@ void rosweb::ros_session::change_subscriber(
     std::cout << "Changing subscription from " << data->prev_topic_name 
         << " to " << data->new_topic_name << '\n';
 
-    m_image_subs.erase(data->prev_topic_name);
+    destroy_sub_helper(data->prev_topic_name, data->msg_type);
     create_sub_helper(data->new_topic_name, data->msg_type);
 
     r->set_status(200);
@@ -180,20 +179,22 @@ void rosweb::ros_session::change_subscriber(
 }
 
 void rosweb::ros_session::create_sub_helper(const std::string& topic_name, const std::string& msg_type) {
+    m_sub_wrapper.types.insert({topic_name, msg_type});
     if (msg_type == "sensor_msgs/msg/Image") {
-        m_image_data.insert({topic_name, std::unique_ptr<sensor_msgs::msg::Image>()});
-        m_image_subs.insert({topic_name, create_subscription<sensor_msgs::msg::Image>(
-            topic_name, 10, [this, topic_name](sensor_msgs::msg::Image::SharedPtr msg){
-                std::cout << "topic callback\n";
-                this->m_image_data[topic_name] = std::move(msg);
-                // auto m = new sensor_msgs::msg::Image;
-                // m->header = msg->header;
-                // m->data = msg->data;
-                // m->width = msg->width;
-                // m->height = msg->height;
-                // this->m_image_data[topic_name] = std::unique_ptr<sensor_msgs::msg::Image>(m);
+        m_sub_wrapper.image_data.insert({topic_name, std::shared_ptr<sensor_msgs::msg::Image>()});
+        m_sub_wrapper.image_subs.insert({topic_name, create_subscription<sensor_msgs::msg::Image>(
+            topic_name, 10, [&wrapper = m_sub_wrapper, topic_name](sensor_msgs::msg::Image::SharedPtr msg){
+                wrapper.image_data[topic_name] = std::move(msg);
             }
         )});
+    }
+}
+
+void rosweb::ros_session::destroy_sub_helper(const std::string& topic_name, const std::string& msg_type) {
+    m_sub_wrapper.types.erase(topic_name);
+    if (msg_type == "sensor_msgs/msg/Image") {
+        m_sub_wrapper.image_subs.erase(topic_name);
+        m_sub_wrapper.image_data.erase(topic_name);
     }
 }
 

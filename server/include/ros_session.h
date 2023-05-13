@@ -26,8 +26,12 @@ namespace rosweb {
             ros_session(std::shared_ptr<rosweb::bridge> bridge);
         
         private:
-            std::map<std::string, rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> m_image_subs;
-            std::map<std::string, std::shared_ptr<sensor_msgs::msg::Image>> m_image_data;
+
+            struct sub_wrapper {
+                std::map<std::string, std::string> types;
+                std::map<std::string, rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> image_subs;
+                std::map<std::string, sensor_msgs::msg::Image::SharedPtr> image_data;
+            } m_sub_wrapper;
 
             std::shared_ptr<rosweb::bridge> m_bridge;
 
@@ -55,6 +59,8 @@ namespace rosweb {
             );
 
             void create_sub_helper(const std::string& topic_name, const std::string& msg_type);
+
+            void destroy_sub_helper(const std::string& topic_name, const std::string& msg_type);
 
             void bagged_image_to_video(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
