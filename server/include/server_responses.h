@@ -43,6 +43,24 @@ namespace rosweb {
                 std::string m_topic_name;
                 std::string m_msg_type;
         };
+
+        class change_sub : public standard {
+            public:
+                ~change_sub();
+
+                void set_new_topic_name(const std::string& topic_name);
+
+                void set_prev_topic_name(const std::string& topic_name);
+
+                void set_msg_type(const std::string& msg_type);
+
+                std::string stringify() const override;
+
+            private:
+                std::string m_prev_topic_name;
+                std::string m_new_topic_name;
+                std::string m_msg_type;
+        };
     }
 }
 

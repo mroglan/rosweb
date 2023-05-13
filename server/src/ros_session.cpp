@@ -60,6 +60,8 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
         create_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "destroy_subscriber") {
         destroy_subscriber(req_handler, res);
+    } else if (req_handler->get_data()->operation == "change_subscriber") {
+        change_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
         bagged_image_to_video(req_handler, res);
     }
@@ -88,10 +90,8 @@ void rosweb::ros_session::create_subscriber(
     }
 
     std::cout << "Creating subscriber to " << data->topic_name << '\n';
-    if (data->msg_type == "sensor_msgs/msg/Image") {
-        m_sub_wrappers.insert({data->topic_name, 
-            sub_wrapper<sensor_msgs::msg::Image>{this,data->topic_name, data->msg_type}});
-    }
+    create_sub_helper(data->topic_name, data->msg_type);
+
     res->set_status(200);
     res->set_msg("Successfully created subscription.");
 }
@@ -120,6 +120,54 @@ void rosweb::ros_session::destroy_subscriber(
 
     res->set_status(200);
     res->set_msg("Successfully destroyed subscription.");
+}
+
+void rosweb::ros_session::change_subscriber(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard*& res) {
+    
+    delete res;
+    res = new rosweb::server_responses::change_sub;
+
+    auto data = static_cast<const rosweb::client_requests::change_subscriber_request*>(req_handler->get_data());
+
+    auto r = static_cast<rosweb::server_responses::change_sub*>(res);
+    r->set_new_topic_name(data->new_topic_name);
+    r->set_prev_topic_name(data->prev_topic_name);
+    r->set_msg_type(data->msg_type);
+
+    if (m_sub_wrappers.find(data->new_topic_name) != m_sub_wrappers.end()) {
+        r->set_status(400);
+        r->set_msg("Subscription already exists.");
+        rosweb::errors::request_error("Subscription to " + data->new_topic_name + " already exists.").show();
+        return;
+    }
+
+    if (m_sub_wrappers.find(data->prev_topic_name) == m_sub_wrappers.end()) {
+        r->set_status(400);
+        r->set_msg("No subscription to destroy.");
+        rosweb::errors::request_error("No subscription to " + data->prev_topic_name + " to destroy.").show();
+        return;
+    }
+
+    // TODO:
+    // Add check that data->msg_type matches the msg_type being subscribed to currently.
+
+    std::cout << "Changing subscription from " << data->prev_topic_name 
+        << " to " << data->new_topic_name << '\n';
+
+    m_sub_wrappers.erase(data->prev_topic_name);
+    create_sub_helper(data->new_topic_name, data->msg_type);
+
+    r->set_status(200);
+    r->set_msg("Successfully changed subscription.");
+}
+
+void rosweb::ros_session::create_sub_helper(const std::string& topic_name, const std::string& msg_type) {
+    if (msg_type == "sensor_msgs/msg/Image") {
+        m_sub_wrappers.insert({topic_name, 
+            sub_wrapper<sensor_msgs::msg::Image>{this,topic_name, msg_type}});
+    }
 }
 
 void rosweb::ros_session::bagged_image_to_video(

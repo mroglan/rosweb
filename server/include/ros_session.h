@@ -81,6 +81,13 @@ namespace rosweb {
                 rosweb::server_responses::standard*& res
             );
 
+            void change_subscriber(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+                rosweb::server_responses::standard*& res
+            );
+
+            void create_sub_helper(const std::string& topic_name, const std::string& msg_type);
+
             void bagged_image_to_video(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
                 rosweb::server_responses::standard*& res

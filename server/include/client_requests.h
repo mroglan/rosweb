@@ -34,6 +34,14 @@ namespace rosweb {
                 ~destroy_subscriber_request();
             };
 
+            struct change_subscriber_request : client_request {
+                std::string prev_topic_name;
+                std::string new_topic_name;
+                std::string msg_type;
+
+                ~change_subscriber_request();
+            };
+
             struct bagged_image_to_video_request : client_request {
                 std::string output_name;
                 std::string bag_path;
@@ -66,6 +74,8 @@ namespace rosweb {
                     void handle_incoming_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
 
                     void handle_incoming_destroy_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
+
+                    void handle_incoming_change_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
 
                     void handle_incoming_bagged_image_to_video_request(nlohmann::json_abi_v3_11_2::json& j);
             };

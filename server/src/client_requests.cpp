@@ -27,6 +27,8 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
             handle_incoming_subscriber_request(j);
         } else if (j["operation"] == "destroy_subscriber") {
             handle_incoming_destroy_subscriber_request(j);
+        } else if (j["operation"] == "change_subscriber") {
+            handle_incoming_change_subscriber_request(j);
         } else if (j["operation"] == "bagged_image_to_video") {
             handle_incoming_bagged_image_to_video_request(j);
         } else {
@@ -100,6 +102,31 @@ void rosweb::client_requests::client_request_handler::handle_incoming_destroy_su
     m_data = std::unique_ptr<rosweb::client_requests::destroy_subscriber_request>(data);
 }
 
+void rosweb::client_requests::client_request_handler::handle_incoming_change_subscriber_request(json& j) {
+    if (j["data"]["prev_topic_name"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.prev_topic_name.");
+    }
+    if (j["data"]["new_topic_name"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.new_topic_name.");
+    }
+    if (j["data"]["msg_type"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.msg_type.");
+    }
+
+    std::unique_lock<std::mutex> lock{m_mutex};
+    m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
+
+    m_acknowledged = false;
+
+    auto data = new rosweb::client_requests::change_subscriber_request;
+    data->operation = j["operation"];
+    data->msg_type = j["data"]["msg_type"];
+    data->new_topic_name = j["data"]["new_topic_name"];
+    data->prev_topic_name = j["data"]["prev_topic_name"];
+
+    m_data = std::unique_ptr<rosweb::client_requests::change_subscriber_request>(data);
+}
+
 void rosweb::client_requests::client_request_handler::handle_incoming_bagged_image_to_video_request(json& j) {
     if (j["data"]["output_name"] == nullptr) {
         throw rosweb::errors::request_error("Missing required field data.output_name.");
@@ -133,3 +160,5 @@ rosweb::client_requests::create_subscriber_request::~create_subscriber_request()
 rosweb::client_requests::destroy_subscriber_request::~destroy_subscriber_request() {}
 
 rosweb::client_requests::bagged_image_to_video_request::~bagged_image_to_video_request() {}
+
+rosweb::client_requests::change_subscriber_request::~change_subscriber_request() {}
