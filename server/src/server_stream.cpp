@@ -11,29 +11,29 @@
 using json = nlohmann::json_abi_v3_11_2::json;
 
 void rosweb::server_stream::add_msg(const std::string& topic_name,
-    const sensor_msgs::msg::Image& msg) {
-    if (!msg.header.stamp.nanosec) return;
+    const sensor_msgs::msg::Image::SharedPtr msg) {
 
     auto iter = m_data.find(topic_name);
     if (iter != m_data.end() && 
-        iter->second["ts"] == msg.header.stamp.nanosec) return;
+        iter->second["ts"] == msg->header.stamp.nanosec) {
+        return;
+    };
     
     std::cout << "Adding image to stream!\n";
 
-    // std::cout << msg.get() << '\n';
-    std::cout << msg.height << '\n';
+    std::cout << msg->height << '\n';
     
     json j;
 
     j["type"] = "sensor_msgs/msg/Image";
-    j["ts"] = msg.header.stamp.nanosec;
+    j["ts"] = msg->header.stamp.nanosec;
     std::cout << "stuff0\n";
     // TODO:
     // pass in whether or not the topic is paused
     j["paused"] = false;
 
-    j["data"]["height"] = msg.height;
-    j["data"]["width"] = msg.width;
+    j["data"]["height"] = msg->height;
+    j["data"]["width"] = msg->width;
     
     std::cout << "stuff1\n";
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, "rgb8");

@@ -43,21 +43,11 @@ void rosweb::ros_session::timer_callback() {
     }
     delete res;
 
-    for (auto& w : m_sub_wrapper.image_data) {
-        std::cout << w.first << '\n';
+    for (const auto& w : m_sub_wrapper.image_data) {
         if (!w.second) continue;
-        std::cout << w.second->header.frame_id << '\n';
-        // if (w.second.which() == 0) {
-        //     auto wrapper = boost::get<sub_wrapper<sensor_msgs::msg::Image>>(w.second);
-        //     std::cout << "got wrapper" << std::endl;
-        //     if (wrapper.has_data()) {
-        //         std::cout << "has data\n" << std::endl;
-        //         // m_stream->add_msg(w.first, 
-        //         //     wrapper.get_data());
-        //     } else {
-        //         std::cout << "No data\n";
-        //     }
-        // }
+        std::cout << "ros session " << w.first << '\n';
+        std::cout << "ros session " << w.second->header.frame_id << '\n';
+        m_stream->add_msg(w.first, w.second);
     }
 
     m_bridge->handle_outgoing_ws_msgs(msgs);
