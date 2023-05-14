@@ -4,6 +4,7 @@
 #include <memory>
 #include <iostream>
 #include <map>
+#include <set>
 #include <boost/variant.hpp>
 
 #include "rclcpp/rclcpp.hpp"
@@ -29,6 +30,8 @@ namespace rosweb {
 
             struct sub_wrapper {
                 std::map<std::string, std::string> types;
+                std::set<std::string> paused;
+
                 std::map<std::string, rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> image_subs;
                 std::map<std::string, sensor_msgs::msg::Image::SharedPtr> image_data;
             } m_sub_wrapper;
@@ -54,6 +57,11 @@ namespace rosweb {
             );
 
             void change_subscriber(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+                rosweb::server_responses::standard*& res
+            );
+
+            void toggle_pause_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
                 rosweb::server_responses::standard*& res
             );

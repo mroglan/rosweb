@@ -47,6 +47,7 @@ void rosweb::ros_session::timer_callback() {
     m_stream->clear();
     for (const auto& w : m_sub_wrapper.image_data) {
         if (!w.second) continue;
+        if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
         m_stream->add_msg(w.first, w.second);
     }
 
@@ -71,6 +72,8 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
         destroy_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "change_subscriber") {
         change_subscriber(req_handler, res);
+    } else if (req_handler->get_data()->operation == "toggle_pause_subscriber") {
+        toggle_pause_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
         bagged_image_to_video(req_handler, res);
     }
@@ -170,6 +173,39 @@ void rosweb::ros_session::change_subscriber(
 
     r->set_status(200);
     r->set_msg("Successfully changed subscription.");
+}
+
+void rosweb::ros_session::toggle_pause_subscriber(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard*& res) {
+    
+    delete res;
+    res = new rosweb::server_responses::create_or_destroy_sub;
+
+    auto data = static_cast<const rosweb::client_requests::toggle_pause_subscriber_request*>
+        (req_handler->get_data());
+    
+    auto r = static_cast<rosweb::server_responses::create_or_destroy_sub*>(res);
+    r->set_topic_name(data->topic_name);
+    r->set_msg_type(data->msg_type);
+
+    if (m_sub_wrapper.types.find(data->topic_name) == m_sub_wrapper.types.end()) {
+        r->set_status(400);
+        r->set_msg("No subscription to toggle pause.");
+        rosweb::errors::request_error("No subscription to " + data->topic_name + " to toggle pause.").show();
+        return;
+    }
+
+    if (m_sub_wrapper.paused.find(data->topic_name) == m_sub_wrapper.paused.end()) {
+        std::cout << "Pausing subscription to " << data->topic_name << '\n';
+        m_sub_wrapper.paused.insert(data->topic_name);
+        r->set_msg("Paused subscription.");
+    } else {
+        std::cout << "Playing subscription to " << data->topic_name << '\n';
+        m_sub_wrapper.paused.erase(data->topic_name);
+        r->set_msg("Playing subscription.");
+    }
+    r->set_status(200);
 }
 
 void rosweb::ros_session::create_sub_helper(const std::string& topic_name, const std::string& msg_type) {

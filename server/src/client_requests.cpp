@@ -31,6 +31,8 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
             handle_incoming_change_subscriber_request(j);
         } else if (j["operation"] == "bagged_image_to_video") {
             handle_incoming_bagged_image_to_video_request(j);
+        } else if (j["operation"] == "toggle_pause_subscriber") {
+            handle_incoming_toggle_pause_subscriber_request(j);
         } else {
             throw rosweb::errors::message_parse_error("No valid operation field value provided for client request.");
         }
@@ -127,6 +129,27 @@ void rosweb::client_requests::client_request_handler::handle_incoming_change_sub
     m_data = std::unique_ptr<rosweb::client_requests::change_subscriber_request>(data);
 }
 
+void rosweb::client_requests::client_request_handler::handle_incoming_toggle_pause_subscriber_request(json& j) {
+    if (j["data"]["topic_name"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.topic_name.");
+    }
+    if (j["data"]["msg_type"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.msg_type.");
+    }
+
+    std::unique_lock<std::mutex> lock{m_mutex};
+    m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
+
+    m_acknowledged = false;
+
+    auto data = new rosweb::client_requests::toggle_pause_subscriber_request;
+    data->operation = j["operation"];
+    data->msg_type = j["data"]["msg_type"];
+    data->topic_name = j["data"]["topic_name"];
+
+    m_data = std::unique_ptr<rosweb::client_requests::toggle_pause_subscriber_request>(data);
+}
+
 void rosweb::client_requests::client_request_handler::handle_incoming_bagged_image_to_video_request(json& j) {
     if (j["data"]["output_name"] == nullptr) {
         throw rosweb::errors::request_error("Missing required field data.output_name.");
@@ -162,3 +185,5 @@ rosweb::client_requests::destroy_subscriber_request::~destroy_subscriber_request
 rosweb::client_requests::bagged_image_to_video_request::~bagged_image_to_video_request() {}
 
 rosweb::client_requests::change_subscriber_request::~change_subscriber_request() {}
+
+rosweb::client_requests::toggle_pause_subscriber_request::~toggle_pause_subscriber_request() {}
