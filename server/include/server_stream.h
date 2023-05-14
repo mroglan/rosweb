@@ -13,12 +13,14 @@ namespace rosweb {
         public:
 
             void add_msg(const std::string& topic_name,
-                const sensor_msgs::msg::Image* msg);
+                const sensor_msgs::msg::Image::SharedPtr msg);
+            
+            void clear();
 
             std::string stringify() const;
         
         private:
-            std::map<std::string, nlohmann::json_abi_v3_11_2::json> m_data;
+            nlohmann::json_abi_v3_11_2::json m_data;
     };
 }
 

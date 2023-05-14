@@ -31,7 +31,7 @@ namespace rosweb {
 
         class create_or_destroy_sub : public standard {
             public:
-                ~create_or_destroy_sub();
+                virtual ~create_or_destroy_sub();
 
                 void set_topic_name(const std::string& topic_name);
 
