@@ -7,7 +7,7 @@ export default function Display({ws, controls}) {
 
     const canvasRef = useRef();
 
-    useEffect(() => {
+    useMemo(() => {
         if (!ws.lastMessage) return
         if (!canvasRef.current) return
 
