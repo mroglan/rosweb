@@ -46,14 +46,11 @@ export default function Controls({ws, controls, setControls}) {
     const handlePauseChange = (e) => {
         let msg = {
             type: 'request',
+            operation: 'toggle_pause_subscriber',
             data: {
-                topic_name: controls.topic
+                topic_name: controls.topic,
+                msg_type: 'sensor_msgs/msg/Image'
             }
-        }
-        if (controls.paused) {
-            msg.operation = 'play_subscriber'
-        } else {
-            msg.operation = 'pause_subscriber'
         }
         ws.sendMessage(JSON.stringify(msg))
         setPauseDisabled(true)

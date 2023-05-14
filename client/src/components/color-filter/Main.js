@@ -1,6 +1,7 @@
 import { Box, Grid } from "@mui/material";
 import { useState } from "react";
 import Controls from './Controls'
+import Display from "./Display";
 
 export default function Main({ws}) {
 
@@ -18,6 +19,11 @@ export default function Main({ws}) {
                     <Box>
                         <Controls ws={ws} controls={controls} setControls={setControls} />
                     </Box> 
+                </Grid>
+                <Grid item>
+                    <Box>
+                        <Display ws={ws} controls={controls} />
+                    </Box>
                 </Grid>
             </Grid>
         </Box>
