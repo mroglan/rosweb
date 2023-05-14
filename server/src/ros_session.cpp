@@ -27,7 +27,7 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
     : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)}, 
     m_stream{new rosweb::server_stream} {
     m_timer = create_wall_timer(
-        std::chrono::milliseconds{100}, 
+        std::chrono::milliseconds{500}, 
         std::bind(&rosweb::ros_session::timer_callback, this)
     );
 }
@@ -43,12 +43,20 @@ void rosweb::ros_session::timer_callback() {
     }
     delete res;
 
+    auto start = std::chrono::high_resolution_clock::now();
+    m_stream->clear();
     for (const auto& w : m_sub_wrapper.image_data) {
         if (!w.second) continue;
-        std::cout << "ros session " << w.first << '\n';
-        std::cout << "ros session " << w.second->header.frame_id << '\n';
         m_stream->add_msg(w.first, w.second);
     }
+
+    std::string s = m_stream->stringify();
+    if (!s.empty()) {
+        msgs.push_back(s);
+    }
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    std::cout << "Duration: " << duration.count() << '\n';
 
     m_bridge->handle_outgoing_ws_msgs(msgs);
 }
@@ -83,7 +91,6 @@ void rosweb::ros_session::create_subscriber(
     static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_topic_name(data->topic_name);
     static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_msg_type(data->msg_type);
 
-    // TODO CHANGE CHANGE CHANGE
     if (m_sub_wrapper.types.find(data->topic_name) != m_sub_wrapper.types.end()) {
         res->set_status(400);
         res->set_msg("Subscription already exists.");
@@ -110,7 +117,6 @@ void rosweb::ros_session::destroy_subscriber(
     static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_topic_name(data->topic_name);
     static_cast<rosweb::server_responses::create_or_destroy_sub*>(res)->set_msg_type(data->msg_type);
     
-    // TODO CHANGE CHANGE CHANGE
     if (m_sub_wrapper.types.find(data->topic_name) == m_sub_wrapper.types.end()) {
         res->set_status(400);
         res->set_msg("No subscription to destroy.");
@@ -139,7 +145,6 @@ void rosweb::ros_session::change_subscriber(
     r->set_prev_topic_name(data->prev_topic_name);
     r->set_msg_type(data->msg_type);
 
-    // TODO CHANGE CHANGE CHANGE
     if (m_sub_wrapper.types.find(data->new_topic_name) != m_sub_wrapper.types.end()) {
         r->set_status(400);
         r->set_msg("Subscription already exists.");
@@ -147,7 +152,6 @@ void rosweb::ros_session::change_subscriber(
         return;
     }
 
-    // TODO CHANGE CHANGE CHANGE
     if (m_sub_wrapper.types.find(data->prev_topic_name) == m_sub_wrapper.types.end()) {
         r->set_status(400);
         r->set_msg("No subscription to destroy.");

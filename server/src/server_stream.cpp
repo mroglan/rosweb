@@ -13,39 +13,36 @@ using json = nlohmann::json_abi_v3_11_2::json;
 void rosweb::server_stream::add_msg(const std::string& topic_name,
     const sensor_msgs::msg::Image::SharedPtr msg) {
 
-    auto iter = m_data.find(topic_name);
-    if (iter != m_data.end() && 
-        iter->second["ts"] == msg->header.stamp.nanosec) {
-        return;
-    };
-    
     std::cout << "Adding image to stream!\n";
 
     std::cout << msg->height << '\n';
-    
-    json j;
 
-    j["type"] = "sensor_msgs/msg/Image";
-    j["ts"] = msg->header.stamp.nanosec;
+    m_data["topics"][topic_name]["type"] = "sensor_msgs/msg/Image";
+    m_data["topics"][topic_name]["ts"] = msg->header.stamp.nanosec;
     std::cout << "stuff0\n";
     // TODO:
     // pass in whether or not the topic is paused
-    j["paused"] = false;
+    m_data["topics"][topic_name]["paused"] = false;
 
-    j["data"]["height"] = msg->height;
-    j["data"]["width"] = msg->width;
-    
+    m_data["topics"][topic_name]["data"]["height"] = msg->height;
+    m_data["topics"][topic_name]["data"]["width"] = msg->width;
+
     std::cout << "stuff1\n";
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, "rgb8");
     std::cout << "stuff2\n";
     std::vector<uchar> data;
     data.assign(cv_ptr->image.data, 
         cv_ptr->image.data + cv_ptr->image.total()*cv_ptr->image.channels());
-    j["data"]["data"] = data;
+    m_data["topics"][topic_name]["data"]["data"] = data;
+}
 
-    m_data[topic_name] = j;
+void rosweb::server_stream::clear() {
+    m_data = {};
+    m_data["type"] = "stream";
 }
 
 std::string rosweb::server_stream::stringify() const {
-    return "";
+    if (!m_data.contains("topics")) return {};
+
+    return m_data.dump();
 }
