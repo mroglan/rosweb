@@ -5,22 +5,12 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { BluePrimaryButton, BluePrimaryIconButton, RedPrimaryIconButton } from "../misc/buttons";
+import { colorBounds, cv2Convert } from './colorConversions'
 
 const filterTypes = [
     'HSV',
     'RGB'
 ].sort()
-
-const colorBounds = {
-    HSV: {
-        js: [360, 100, 100],
-        cv2: [180, 255, 255]
-    },
-    RGB: {
-        js: [255, 255, 255],
-        cv2: [255, 255, 255]
-    }
-}
 
 export default function Controls({ws, controls, setControls}) {
 
@@ -87,6 +77,15 @@ export default function Controls({ws, controls, setControls}) {
                 upper: colorBounds.HSV.cv2
             }}})
         }
+    }
+    
+    const handleFilterTypeChange = (e) => {
+        const lower = cv2Convert(controls.filters[controls.selectedFilter].lower, 
+            controls.filters[controls.selectedFilter].type, e.target.value)
+        const upper = cv2Convert(controls.filters[controls.selectedFilter].upper,
+            controls.filters[controls.selectedFilter].type, e.target.value)
+        setControls({...controls, filters: {...controls.filters, 
+            [controls.selectedFilter]: {lower, upper, type: e.target.value}}})
     }
 
     const updateFilterBound = (bound, index, value) => {
@@ -157,9 +156,7 @@ export default function Controls({ws, controls, setControls}) {
                 </Box> 
                 <Box mt={3} ml={2}>
                     <Select value={controls.filters[controls.selectedFilter].type}
-                        onChange={(e) => setControls({...controls, filters: {...controls.filters, 
-                            [controls.selectedFilter]: {...controls.filters[controls.selectedFilter], 
-                            type: e.target.value}}})}
+                        onChange={handleFilterTypeChange}
                         sx={{minWidth: 300}}>
                         {filterTypes.map(type => (
                             <MenuItem key={type} value={type}>{type}</MenuItem>
@@ -177,8 +174,8 @@ export default function Controls({ws, controls, setControls}) {
                         <Box mt={3} ml={2} sx={{gridColumn: 'span 2'}}>
                             <Grid container alignItems="center">
                                 <Grid item>
-                                    <TextField type="number" 
-                                        value={controls.filters[controls.selectedFilter].lower[i]}
+                                    <TextField type="number" placeholder="0"
+                                        value={controls.filters[controls.selectedFilter].lower[i] || ''}
                                         onChange={(e) => updateFilterBound('lower', i, e.target.value)}
                                         sx={{maxWidth: 100}} />
                                 </Grid>
@@ -190,8 +187,8 @@ export default function Controls({ws, controls, setControls}) {
                                     </Box>
                                 </Grid>
                                 <Grid item>
-                                    <TextField type="number"
-                                        value={controls.filters[controls.selectedFilter].upper[i]}
+                                    <TextField type="number" placeholder="0"
+                                        value={controls.filters[controls.selectedFilter].upper[i] || ''}
                                         onChange={(e) => updateFilterBound('upper', i, e.target.value)}
                                         sx={{maxWidth: 100}} />
                                 </Grid>
