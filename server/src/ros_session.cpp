@@ -162,8 +162,13 @@ void rosweb::ros_session::change_subscriber(
         return;
     }
 
-    // TODO:
-    // Add check that data->msg_type matches the msg_type being subscribed to currently.
+    if (m_sub_wrapper.types[data->prev_topic_name] != data->msg_type) {
+        r->set_status(400);
+        r->set_msg("Msg type does not match current msg type.");
+        rosweb::errors::request_error("Previous msg type of " + m_sub_wrapper.types[data->prev_topic_name]
+            + " and requested msg type of " + data->msg_type).show();
+        return;
+    }
 
     std::cout << "Changing subscription from " << data->prev_topic_name 
         << " to " << data->new_topic_name << '\n';
