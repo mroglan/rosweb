@@ -31,3 +31,11 @@ export const BluePrimaryIconButton = styled(IconButton)(({theme}) => ({
         color: theme.palette.primary.dark
     }
 }))
+
+export const RedPrimaryIconButton = styled(IconButton)(({theme}) => ({
+    color: theme.palette.error.main,
+    transition: 'color 300ms',
+    '&:hover': {
+        color: theme.palette.error.dark
+    }
+}))

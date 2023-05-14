@@ -1,13 +1,31 @@
-import { Box, Grid, TextField, Typography, useMediaQuery } from "@mui/material";
-import { useMemo, useState } from "react";
+import { Autocomplete, Box, Grid, MenuItem, Select, TextField, Typography, useMediaQuery } from "@mui/material";
+import { useMemo, useState, Fragment } from "react";
 import SyncIcon from '@mui/icons-material/Sync';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
-import { BluePrimaryButton, BluePrimaryIconButton } from "../misc/buttons";
+import DeleteIcon from '@mui/icons-material/Delete';
+import { BluePrimaryButton, BluePrimaryIconButton, RedPrimaryIconButton } from "../misc/buttons";
+
+const filterTypes = [
+    'HSV',
+    'RGB'
+].sort()
+
+const colorBounds = {
+    HSV: {
+        js: [360, 100, 100],
+        cv2: [180, 255, 255]
+    },
+    RGB: {
+        js: [255, 255, 255],
+        cv2: [255, 255, 255]
+    }
+}
 
 export default function Controls({ws, controls, setControls}) {
 
     const [typedTopic, setTypedTopic] = useState('')
+    const [typedFilter, setTypedFilter] = useState(controls.selectedFilter)
 
     const [syncDisabled, setSyncDisabled] = useState(true)
     const [pauseDisabled, setPauseDisabled] = useState(true)
@@ -57,38 +75,131 @@ export default function Controls({ws, controls, setControls}) {
         setControls({...controls, paused: !controls.paused})
     }
 
+    const handleFilterChange = (e, val) => {
+        if (!val) val = 'None'
+
+        if (controls.filters.hasOwnProperty(val) || val == 'None') {
+            setControls({...controls, selectedFilter: val})
+        } else {
+            setControls({...controls, selectedFilter: val, filters: {...controls.filters, [val]: {
+                type: 'HSV',
+                lower: [0, 0, 0],
+                upper: colorBounds.HSV.cv2
+            }}})
+        }
+    }
+
+    const updateFilterBound = (bound, index, value) => {
+        value = Number(value)
+        if (value < 0) return
+        if (value > colorBounds[controls.filters[controls.selectedFilter].type].cv2[index]) return
+
+        const copy = [...controls.filters[controls.selectedFilter][bound]]
+        copy[index] = value
+        setControls({...controls, filters: {...controls.filters, [controls.selectedFilter]: {
+            ...controls.filters[controls.selectedFilter],
+            [bound]: copy
+        }}})
+    }
+
     return (
-        <Box>
+        <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr auto',
+            gridAutoFlow: 'row',
+            alignItems: 'center'
+        }}>
             <Box>
-                <Grid container alignItems="center" wrap="nowrap">
-                    <Grid item>
-                        <Typography variant="h6">
-                            Topic
-                        </Typography>
-                    </Grid>
-                    <Grid item>
-                        <Box ml={2}>
-                            <TextField value={typedTopic} onChange={handleTypedTopicChange}
-                            sx={{minWidth: 300}} />
-                        </Box>
-                    </Grid>
-                    <Grid item>
-                        <Box ml={1}>
-                            <BluePrimaryIconButton onClick={handleTopicChange}
-                                disabled={syncDisabled}>
-                                <SyncIcon />
-                            </BluePrimaryIconButton>
-                        </Box>
-                    </Grid>
-                </Grid>
+                <Typography variant="h6">
+                    Topic
+                </Typography>
             </Box>
-            <Box pl="66px" mt={3}>
+            <Box ml={2}>
+                <TextField value={typedTopic} onChange={handleTypedTopicChange}
+                sx={{minWidth: 300}} />
+            </Box>
+            <Box ml={1}>
+                <BluePrimaryIconButton onClick={handleTopicChange}
+                    disabled={syncDisabled}>
+                    <SyncIcon />
+                </BluePrimaryIconButton>
+            </Box>
+            <Box />
+            <Box ml={2} mt={1}>
                 <BluePrimaryButton sx={{minWidth: 300}} onClick={handlePauseChange}
                     endIcon={controls.paused ? <PlayArrowIcon /> : <PauseIcon />}
                     disabled={pauseDisabled}>
                     {controls.paused ? 'Play Stream' : 'Pause Stream'}
                 </BluePrimaryButton>
             </Box>
+            <Box />
+            <Box mt={3}>
+                <Typography variant="h6">
+                    Filter
+                </Typography>
+            </Box>
+            <Box mt={3} ml={2}>
+                <Autocomplete inputValue={typedFilter} onInputChange={(e, val) => setTypedFilter(val)}
+                    value={controls.selectedFilter} onChange={handleFilterChange}
+                    options={[...Object.keys(controls.filters), 'None']} sx={{minWidth: 300}}
+                    renderInput={(params) => <TextField {...params} />} freeSolo />
+            </Box>
+            <Box mt={3}>
+                {controls.selectedFilter !== 'None' && <RedPrimaryIconButton>
+                    <DeleteIcon />     
+                </RedPrimaryIconButton>}
+            </Box>
+            {controls.selectedFilter !== 'None' && <>
+                <Box mt={3}>
+                    <Typography variant="h6">
+                        Type
+                    </Typography>
+                </Box> 
+                <Box mt={3} ml={2}>
+                    <Select value={controls.filters[controls.selectedFilter].type}
+                        onChange={(e) => setControls({...controls, filters: {...controls.filters, 
+                            [controls.selectedFilter]: {...controls.filters[controls.selectedFilter], 
+                            type: e.target.value}}})}
+                        sx={{minWidth: 300}}>
+                        {filterTypes.map(type => (
+                            <MenuItem key={type} value={type}>{type}</MenuItem>
+                        ))}
+                    </Select>
+                </Box>
+                <Box />
+                {controls.filters[controls.selectedFilter].type.split('').map((letter, i) => (
+                    <Fragment key={i}>
+                        <Box mt={3}>
+                            <Typography variant="h6">
+                                {letter}
+                            </Typography>
+                        </Box>
+                        <Box mt={3} ml={2} sx={{gridColumn: 'span 2'}}>
+                            <Grid container alignItems="center">
+                                <Grid item>
+                                    <TextField type="number" 
+                                        value={controls.filters[controls.selectedFilter].lower[i]}
+                                        onChange={(e) => updateFilterBound('lower', i, e.target.value)}
+                                        sx={{maxWidth: 100}} />
+                                </Grid>
+                                <Grid item>
+                                    <Box mx={2}>
+                                        <Typography varaint="body1">
+                                            to
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid item>
+                                    <TextField type="number"
+                                        value={controls.filters[controls.selectedFilter].upper[i]}
+                                        onChange={(e) => updateFilterBound('upper', i, e.target.value)}
+                                        sx={{maxWidth: 100}} />
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    </Fragment>
+                ))}
+            </>}
         </Box>
     )
 }
