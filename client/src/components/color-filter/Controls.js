@@ -80,12 +80,9 @@ export default function Controls({ws, controls, setControls}) {
     }
     
     const handleFilterTypeChange = (e) => {
-        const lower = cv2Convert(controls.filters[controls.selectedFilter].lower, 
-            controls.filters[controls.selectedFilter].type, e.target.value)
-        const upper = cv2Convert(controls.filters[controls.selectedFilter].upper,
-            controls.filters[controls.selectedFilter].type, e.target.value)
         setControls({...controls, filters: {...controls.filters, 
-            [controls.selectedFilter]: {lower, upper, type: e.target.value}}})
+            [controls.selectedFilter]: {lower: [0,0,0], 
+                upper: colorBounds[e.target.value].cv2, type: e.target.value}}})
     }
 
     const updateFilterBound = (bound, index, value) => {
