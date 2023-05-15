@@ -17,3 +17,18 @@ export function cv2Convert(color, encoding, targetEncoding) {
     color = color.map((c, i) => (c / colorBounds[targetEncoding].js[i]) * colorBounds[targetEncoding].cv2[i])
     return color
 }
+
+export function convertRGB(color, targetEncoding) {
+    if (targetEncoding === 'RGB') return color
+    color = convert.rgb[targetEncoding.toLowerCase()](color)
+    color = color.map((c, i) => (c / colorBounds[targetEncoding].js[i]) * colorBounds[targetEncoding].cv2[i])
+    return color
+}
+
+export function withinBounds(lower, upper, color) {
+    for (let i = 0; i < color.length; i++) {
+        if (lower[i] > color[i]) return false
+        if (upper[i] < color[i]) return false
+    }
+    return true
+}
