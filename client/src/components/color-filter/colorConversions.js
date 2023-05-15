@@ -27,8 +27,13 @@ export function convertRGB(color, targetEncoding) {
 
 export function withinBounds(lower, upper, color) {
     for (let i = 0; i < color.length; i++) {
-        if (lower[i] > color[i]) return false
-        if (upper[i] < color[i]) return false
+        if (lower[i] < upper[i]) {
+            if (lower[i] > color[i]) return false
+            if (upper[i] < color[i]) return false
+        } else {
+            if (lower[i] <= color[i]) continue
+            if (upper[i] < color[i]) return false
+        }
     }
     return true
 }
