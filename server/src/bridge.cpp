@@ -42,11 +42,21 @@ void rosweb::bridge::on_accept(beast::error_code ec, tcp::socket socket) {
         std::cout << "Reestablished socket connection.\n";
         m_session = std::make_shared<rosweb::websocket_session>(shared_from_this(), std::move(socket), m_ioc);
         m_session->run();
+        request_reset();
     } else {
         rosweb::errors::show_noncritical_error("Already connected to an active session. " 
             "Multiple sessions currently not supported.");
     }
     accept();
+}
+
+void rosweb::bridge::request_reset() {
+    json j;
+    j["type"] = "request";
+    j["operation"] = "reset";
+
+    std::cout << "Requesting to reset ROS Session.\n";
+    m_client_request_handler->handle_incoming_request(j, m_session);
 }
 
 void rosweb::bridge::handle_incoming_ws_msg(const std::string& msg) {

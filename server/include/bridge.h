@@ -39,6 +39,8 @@ namespace rosweb {
 
             void accept();
             void on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket);
+
+            void request_reset();
     };
 }
 

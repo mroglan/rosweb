@@ -46,6 +46,11 @@ namespace rosweb {
 
             void handle_new_request(rosweb::server_responses::standard*& res);
 
+            void reset(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+                rosweb::server_responses::standard*& res
+            );
+
             void create_subscriber(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
                 rosweb::server_responses::standard*& res

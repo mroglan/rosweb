@@ -78,6 +78,8 @@ namespace rosweb {
                     bool m_acknowledged{true};
                     std::unique_ptr<client_request> m_data;
 
+                    void handle_incoming_reset_request(nlohmann::json_abi_v3_11_2::json& j);
+
                     void handle_incoming_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
 
                     void handle_incoming_destroy_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);

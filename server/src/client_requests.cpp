@@ -23,7 +23,9 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
             throw rosweb::errors::message_parse_error("Operation field missing for client request.");
         }
         res.set_operation(j["operation"]);
-        if (j["operation"] == "create_subscriber") {
+        if (j["operation"] == "reset") {
+            handle_incoming_reset_request(j);
+        } else if (j["operation"] == "create_subscriber") {
             handle_incoming_subscriber_request(j);
         } else if (j["operation"] == "destroy_subscriber") {
             handle_incoming_destroy_subscriber_request(j);
@@ -59,6 +61,18 @@ bool rosweb::client_requests::client_request_handler::is_acknowledged() const {
 const rosweb::client_requests::client_request* 
     rosweb::client_requests::client_request_handler::get_data() const {
     return m_data.get();
+}
+
+void rosweb::client_requests::client_request_handler::handle_incoming_reset_request(json& j) {
+    std::unique_lock<std::mutex> lock{m_mutex};
+    m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
+
+    m_acknowledged = false;
+
+    auto data = new rosweb::client_requests::client_request;
+    data->operation = j["operation"];
+
+    m_data = std::unique_ptr<rosweb::client_requests::client_request>(data);
 }
 
 void rosweb::client_requests::client_request_handler::handle_incoming_subscriber_request(json& j) {

@@ -66,7 +66,9 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
     auto req_handler = m_bridge->get_client_request_handler();
     if (req_handler->is_acknowledged()) return;
 
-    if (req_handler->get_data()->operation == "create_subscriber") {
+    if (req_handler->get_data()->operation == "reset") {
+        reset(req_handler, res);
+    } else if (req_handler->get_data()->operation == "create_subscriber") {
         create_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "destroy_subscriber") {
         destroy_subscriber(req_handler, res);
@@ -80,6 +82,18 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
     res->set_operation(req_handler->get_data()->operation);
 
     req_handler->acknowledge();
+}
+
+void rosweb::ros_session::reset(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard*& res) {
+    std::cout << "Resetting ROS Session.\n";
+    
+    m_sub_wrapper.image_subs.clear();
+    m_sub_wrapper.image_data.clear();
+
+    m_sub_wrapper.paused.clear();
+    m_sub_wrapper.types.clear();
 }
 
 void rosweb::ros_session::create_subscriber(
