@@ -27,7 +27,7 @@ rosweb::ros_session::ros_session(std::shared_ptr<rosweb::bridge> bridge)
     : Node{"rosweb_ros_session"}, m_bridge{std::move(bridge)}, 
     m_stream{new rosweb::server_stream} {
     m_timer = create_wall_timer(
-        std::chrono::milliseconds{500}, 
+        std::chrono::milliseconds{100}, 
         std::bind(&rosweb::ros_session::timer_callback, this)
     );
 }
