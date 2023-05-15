@@ -17,10 +17,14 @@ namespace rosweb {
             
             void clear();
 
+            void reset_timestamps();
+
             std::string stringify() const;
         
         private:
             nlohmann::json_abi_v3_11_2::json m_data;
+
+            std::map<std::string, std::uint32_t> m_timestamps;
     };
 }
 

@@ -13,8 +13,8 @@ export default function App() {
 
 	const ws = useWebSocket(SOCKET_URL, {
 		shouldReconnect: (e) => true,
-		reconnectAttempts: 100,
-		reconnectInterval: 1000
+		reconnectAttempts: 10000,
+		reconnectInterval: 100
 	})
 
 	useMemo(() => {

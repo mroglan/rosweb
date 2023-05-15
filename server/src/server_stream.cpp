@@ -13,6 +13,12 @@ using json = nlohmann::json_abi_v3_11_2::json;
 void rosweb::server_stream::add_msg(const std::string& topic_name,
     const sensor_msgs::msg::Image::SharedPtr msg) {
 
+    auto iter = m_timestamps.find(topic_name);
+    if (iter != m_timestamps.end() 
+        && iter->second == msg->header.stamp.nanosec) return;
+    
+    m_timestamps[topic_name] = msg->header.stamp.nanosec;
+
     m_data["topics"][topic_name]["type"] = "sensor_msgs/msg/Image";
     m_data["topics"][topic_name]["ts"] = msg->header.stamp.nanosec;
 
@@ -29,6 +35,11 @@ void rosweb::server_stream::add_msg(const std::string& topic_name,
 void rosweb::server_stream::clear() {
     m_data = {};
     m_data["type"] = "stream";
+}
+
+void rosweb::server_stream::reset_timestamps() {
+    m_timestamps.clear();
+    std::cout << "reset stream" << std::endl;
 }
 
 std::string rosweb::server_stream::stringify() const {

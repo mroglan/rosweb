@@ -94,6 +94,8 @@ void rosweb::ros_session::reset(
 
     m_sub_wrapper.paused.clear();
     m_sub_wrapper.types.clear();
+
+    m_stream->reset_timestamps();
 }
 
 void rosweb::ros_session::create_subscriber(
