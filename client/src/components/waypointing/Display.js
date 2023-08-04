@@ -11,7 +11,7 @@ export default function Display({ws}) {
         if (!ws.lastMessage) return
 
         const msg = JSON.parse(ws.lastMessage.data)
-        console.log(msg)
+        // console.log(msg)
     }, [ws.lastMessage])
 
     return (
