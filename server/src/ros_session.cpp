@@ -52,6 +52,16 @@ void rosweb::ros_session::timer_callback() {
         if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
         m_stream->add_msg(w.first, w.second);
     }
+    for (const auto& w : m_sub_wrapper.nav_sat_fix_data) {
+        if (!w.second) continue;
+        if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
+        m_stream->add_msg(w.first, w.second);
+    }
+    for (const auto& w : m_sub_wrapper.odometry_data) {
+        if (!w.second) continue;
+        if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
+        m_stream->add_msg(w.first, w.second);
+    }
 
     std::string s = m_stream->stringify();
     if (!s.empty()) {
