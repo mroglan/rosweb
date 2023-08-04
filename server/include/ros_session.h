@@ -10,6 +10,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "./server_stream.h"
 
 namespace rosweb {
@@ -38,6 +39,9 @@ namespace rosweb {
 
                 std::map<std::string, rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr> nav_sat_fix_subs;
                 std::map<std::string, sensor_msgs::msg::NavSatFix::SharedPtr> nav_sat_fix_data;
+
+                std::map<std::string, rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr> odometry_subs;
+                std::map<std::string, nav_msgs::msg::Odometry::SharedPtr> odometry_data;
             } m_sub_wrapper;
 
             std::shared_ptr<rosweb::bridge> m_bridge;
