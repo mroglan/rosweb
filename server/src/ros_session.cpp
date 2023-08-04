@@ -104,6 +104,12 @@ void rosweb::ros_session::reset(
     m_sub_wrapper.image_subs.clear();
     m_sub_wrapper.image_data.clear();
 
+    m_sub_wrapper.nav_sat_fix_subs.clear();
+    m_sub_wrapper.nav_sat_fix_data.clear();
+
+    m_sub_wrapper.odometry_subs.clear();
+    m_sub_wrapper.odometry_data.clear();
+
     m_sub_wrapper.paused.clear();
     m_sub_wrapper.types.clear();
 
