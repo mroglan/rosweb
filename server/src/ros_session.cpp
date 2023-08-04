@@ -9,6 +9,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialization.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include "cv_bridge/cv_bridge.h"
 #include "opencv2/opencv.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -57,7 +58,7 @@ void rosweb::ros_session::timer_callback() {
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "Duration: " << duration.count() << '\n';
+    // std::cout << "Duration: " << duration.count() << '\n';
 
     m_bridge->handle_outgoing_ws_msgs(msgs);
 }
@@ -238,6 +239,14 @@ void rosweb::ros_session::create_sub_helper(const std::string& topic_name, const
                 wrapper.image_data[topic_name] = std::move(msg);
             }
         )});
+    } else if (msg_type == "sensor_msgs/msg/NavSatFix") {
+        m_sub_wrapper.nav_sat_fix_data.insert({topic_name, std::shared_ptr<sensor_msgs::msg::NavSatFix>()});
+        m_sub_wrapper.nav_sat_fix_subs.insert({topic_name, create_subscription<sensor_msgs::msg::NavSatFix>(
+            topic_name, 10, [&wrapper = m_sub_wrapper, topic_name](sensor_msgs::msg::NavSatFix::SharedPtr msg) {
+                std::cout << "getting gps data\n";
+                wrapper.nav_sat_fix_data[topic_name] = std::move(msg);
+            }
+        )});
     }
 }
 
@@ -246,6 +255,9 @@ void rosweb::ros_session::destroy_sub_helper(const std::string& topic_name, cons
     if (msg_type == "sensor_msgs/msg/Image") {
         m_sub_wrapper.image_subs.erase(topic_name);
         m_sub_wrapper.image_data.erase(topic_name);
+    } else if (msg_type == "sensor_msgs/msg/NavSatFix") {
+        m_sub_wrapper.nav_sat_fix_subs.erase(topic_name);
+        m_sub_wrapper.nav_sat_fix_data.erase(topic_name);
     }
 }
 
