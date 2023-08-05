@@ -1,5 +1,5 @@
 import { Box, Grid, TextField, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import WaypointCard from "./WaypointCard";
 
 export default function Edit({controls, setControls}) {
@@ -24,6 +24,13 @@ export default function Edit({controls, setControls}) {
 
     const expand = (group, num) => {
         setExpanded([group, num])
+    }
+
+    const removeWaypoint = (group, num) => {
+        const copy = {...controls}
+        copy.waypoints[group].splice(num, 1)
+        setExpanded([0,0])
+        setControls(copy)
     }
 
     return (
@@ -52,6 +59,7 @@ export default function Edit({controls, setControls}) {
                                     group={oGroup} num={i} 
                                     expanded={expanded[0] === oGroup && expanded[1] === i}
                                     unExpand={unExpand} expand={expand}
+                                    remove={removeWaypoint}
                                 />
                             </Box>
                         ))}

@@ -4,7 +4,7 @@ import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 
 export default function WaypointCard({controls, setControls, group,
-    num, expanded, unExpand, expand}) {
+    num, expanded, unExpand, expand, remove}) {
 
     const point = controls.waypoints[group][num]
 
@@ -133,7 +133,8 @@ export default function WaypointCard({controls, setControls, group,
                     <Divider />
                 </Box>
                 <Box mt={2} pb={2} ml="50px">
-                    <Typography variant="h6" color="error" sx={{cursor: 'pointer'}}>
+                    <Typography variant="h6" color="error" sx={{cursor: 'pointer'}}
+                        onClick={() => remove(group, num)}>
                         Remove
                     </Typography>
                 </Box>
