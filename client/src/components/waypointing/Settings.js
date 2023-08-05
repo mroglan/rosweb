@@ -54,7 +54,7 @@ export default function Settings({ws, controls, setControls}) {
     }
 
     return (
-        <Box>
+        <Box mt={3}>
             <Box sx={{
                 display: 'grid',
                 gridTemplateColumns: 'auto 1fr auto',

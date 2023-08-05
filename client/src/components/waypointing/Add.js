@@ -74,6 +74,8 @@ export default function Add({ws, controls, setControls}) {
                 z: currOdom.data.pose.orientation.z,
                 w: currOdom.data.pose.orientation.w
             }
+            // possibly also add the odometry xyz position to plot
+            // on display more easily
         }
         const copy = {...controls}
         if (copy.waypoints[controls.currGroup]) {

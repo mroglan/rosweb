@@ -22,7 +22,8 @@ export default function Main({ws}) {
         odomTopic: '',
         waypoints: {},
         groupColors: {},
-        currGroup: 1
+        currGroup: 1,
+        saveDir: ''
     })
 
     return (
