@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <boost/variant.hpp>
+#include <dirent.h>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialization.hpp"
@@ -90,6 +91,8 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
         toggle_pause_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
         bagged_image_to_video(req_handler, res);
+    } else if (req_handler->get_data()->operation == "save_waypoints") {
+        save_waypoints(req_handler, res);
     }
     res->set_operation(req_handler->get_data()->operation);
 
@@ -386,5 +389,60 @@ void rosweb::ros_session::bagged_image_to_video(
         rosweb::errors::show_noncritical_error("Failed to create HTML to view video.");
         std::cout << e.what() << '\n';
         return;
+    }
+}
+
+void rosweb::ros_session::save_waypoints(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard*& res) {
+    
+    auto data = static_cast<const rosweb::client_requests::save_waypoints_request*>
+        (req_handler->get_data());
+    
+    if (!getenv("HOME")) {
+        res->set_status(500);
+        res->set_msg("Unable to find HOME directory.");
+        rosweb::errors::show_noncritical_error("No HOME directory found, cannot convert" 
+            "ROS bag to video.");
+        return;
+    }
+
+    std::string home_dir{getenv("HOME")};
+
+    try {
+        std::string dir_path = home_dir + "/" + data->save_dir; 
+
+        auto dirp = opendir(dir_path.c_str());
+        dirent* dp;
+
+        if (!dirp) {
+            throw rosweb::errors::base_error("Directory not found: " + dir_path);
+        }
+        
+        int max_num = 0;
+        while ((dp = readdir(dirp)) != nullptr) {
+            std::string name{dp->d_name};
+            if (name.length() < 7) continue; // points_
+            if (name.find("points_") == -1) continue;
+            std::size_t dot = name.find(".");
+            if (dot == -1) continue;
+            std::string num = name.substr(7, dot - 7);
+            try {
+                int n = std::stoi(num);
+                if (n > max_num) max_num = n;
+            } catch (const std::invalid_argument& e) {
+                continue;
+            }
+        }
+
+        std::cout << "Max num: " << max_num << '\n';
+
+        res->set_msg("Waypoints saved.");
+        res->set_status(200);
+    } catch (const std::exception& e) {
+        res->set_msg("Failed to save waypoints.");
+        res->set_status(500);
+        rosweb::errors::show_noncritical_error("Failed to save waypoints.");
+        std::cout << e.what() << '\n';
     }
 }

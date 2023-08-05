@@ -87,6 +87,11 @@ namespace rosweb {
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
                 rosweb::server_responses::standard*& res
             );
+
+            void save_waypoints(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+                rosweb::server_responses::standard*& res
+            );
     };
 }
 
