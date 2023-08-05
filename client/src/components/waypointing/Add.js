@@ -8,12 +8,12 @@ export default function Add({ws, controls, setControls}) {
     const [currOdom, setCurrOdom] = useState(null)
     const [currNavSat, setCurrNavSat] = useState(null)
     const [color, setColor] = useState(0)
+    const [message, setMessage] = useState({type: 'error', msg: ''})
 
     useMemo(() => {
         if (!ws.lastMessage) return
 
         const msg = JSON.parse(ws.lastMessage.data)
-        console.log(msg)
 
         if (msg.type !== 'stream') return
 
@@ -49,10 +49,51 @@ export default function Add({ws, controls, setControls}) {
         setColor((color + 1) % GROUP_COLORS.length)
     }
 
+    const handleAddWaypoint = () => {
+        if (!currOdom && !currNavSat) {
+            setMessage({type: 'error', msg: 'No odometry and no NavSat.'})
+            return
+        }
+        if (!currOdom) {
+            setMessage({type: 'error', msg: 'No odometry.'})
+            return
+        }
+        if (!currNavSat) {
+            setMessage({type: 'error', msg: 'No NavSat.'})
+            return
+        }
+        const data = {
+            navsat: {
+                latitude: currNavSat.data.latitude,
+                longitude: currNavSat.data.longitude,
+                altitude: currNavSat.data.altitude
+            },
+            orientation: {
+                x: currOdom.data.pose.orientation.x,
+                y: currOdom.data.pose.orientation.y,
+                z: currOdom.data.pose.orientation.z,
+                w: currOdom.data.pose.orientation.w
+            }
+        }
+        const copy = {...controls}
+        if (copy.waypoints[controls.currGroup]) {
+            copy.waypoints[controls.currGroup].push(data)
+        } else {
+            copy.waypoints[controls.currGroup] = [data]
+        }
+        setMessage({type: 'success', msg: 'Added waypoint.'})
+        setControls({...copy})
+    }
+
+    useEffect(() => {
+        if (!message.msg) return
+        setTimeout(() => setMessage({type: 'error', msg: ''}), 2000)
+    }, [message])
+
     return (
         <Box mt={3}>
             <Box width={200}>
-                <BluePrimaryButton fullWidth>
+                <BluePrimaryButton fullWidth onClick={handleAddWaypoint}>
                     Add Waypoint
                 </BluePrimaryButton>
             </Box>
@@ -76,6 +117,12 @@ export default function Add({ws, controls, setControls}) {
                         </Box>
                     </Grid>
                 </Grid>
+            </Box>
+            <Box mt={3}>
+                <Typography variant="body1" 
+                    color={message.type === 'error' ? "error" : "success.main"}>
+                    {message.msg}
+                </Typography>
             </Box>
         </Box>
     )
