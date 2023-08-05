@@ -20,7 +20,7 @@ export default function Export({ws, controls, setControls}) {
 
         const req = {
             type: 'request',
-            operation: 'waypointing',
+            operation: 'save_waypoints',
             data: {
                 waypoints: Object.keys(controls.waypoints).map(key => (
                     controls.waypoints[key].map(point => ({
@@ -30,10 +30,11 @@ export default function Export({ws, controls, setControls}) {
                     }))
                 )).flat(1),
                 groups: Object.keys(controls.waypoints),
-                saveDir: dir
+                save_dir: dir
             }
         }
         console.log('req', req)
+        ws.sendMessage(JSON.stringify(req))
     }
 
     return (
