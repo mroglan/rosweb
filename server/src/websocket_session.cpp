@@ -56,7 +56,8 @@ void rosweb::websocket_session::read() {
 void rosweb::websocket_session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
     std::unique_lock<std::mutex> lock{m_mutex};
 
-    if (ec == websocket::error::closed) {
+    // 125 = operation cancelled
+    if (ec == websocket::error::closed || ec.value() == 125) {
         rosweb::errors::show_noncritical_error("Websocket connection closed. Will attempt to reconnect.");
         m_session_closed = true;
         m_buffer.clear();

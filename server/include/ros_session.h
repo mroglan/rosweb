@@ -9,6 +9,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "./server_stream.h"
 
 namespace rosweb {
@@ -34,6 +36,12 @@ namespace rosweb {
 
                 std::map<std::string, rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> image_subs;
                 std::map<std::string, sensor_msgs::msg::Image::SharedPtr> image_data;
+
+                std::map<std::string, rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr> nav_sat_fix_subs;
+                std::map<std::string, sensor_msgs::msg::NavSatFix::SharedPtr> nav_sat_fix_data;
+
+                std::map<std::string, rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr> odometry_subs;
+                std::map<std::string, nav_msgs::msg::Odometry::SharedPtr> odometry_data;
             } m_sub_wrapper;
 
             std::shared_ptr<rosweb::bridge> m_bridge;
@@ -76,6 +84,11 @@ namespace rosweb {
             void destroy_sub_helper(const std::string& topic_name, const std::string& msg_type);
 
             void bagged_image_to_video(
+                const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+                rosweb::server_responses::standard*& res
+            );
+
+            void save_waypoints(
                 const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
                 rosweb::server_responses::standard*& res
             );

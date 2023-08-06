@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 const options = [
     {name: 'Bagged Image to Video', link: '/bagged-image-to-video'},
-    {name: 'Color Filter', link: '/color-filter'}
+    {name: 'Color Filter', link: '/color-filter'},
+    {name: 'Waypointing', link: '/waypointing'}
 ].sort((a,b) => a.name.localeCompare(b.name))
 
 export default function Options() {

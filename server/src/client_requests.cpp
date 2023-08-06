@@ -35,6 +35,8 @@ void rosweb::client_requests::client_request_handler::handle_incoming_request(js
             handle_incoming_bagged_image_to_video_request(j);
         } else if (j["operation"] == "toggle_pause_subscriber") {
             handle_incoming_toggle_pause_subscriber_request(j);
+        } else if (j["operation"] == "save_waypoints") {
+            handle_incoming_save_waypoints_request(j);
         } else {
             throw rosweb::errors::message_parse_error("No valid operation field value provided for client request.");
         }
@@ -190,6 +192,41 @@ void rosweb::client_requests::client_request_handler::handle_incoming_bagged_ima
     m_data = std::unique_ptr<rosweb::client_requests::bagged_image_to_video_request>(data);
 }
 
+void rosweb::client_requests::client_request_handler::handle_incoming_save_waypoints_request(json& j) {
+    if(j["data"]["waypoints"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.waypoints.");
+    }
+    if (j["data"]["groups"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.groups.");
+    }
+    if (j["data"]["save_dir"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.save_dir.");
+    }
+    std::unique_lock<std::mutex> lock{m_mutex};
+    m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
+
+    m_acknowledged = false;
+
+    auto data = new rosweb::client_requests::save_waypoints_request;
+    data->operation = j["operation"];
+
+    data->waypoints = std::vector<rosweb::client_requests::helpers::Waypoint>{}; 
+    for (const auto& point : j["data"]["waypoints"]) {
+        data->waypoints.push_back({
+            {point["pos"]["latitude"], point["pos"]["longitude"], point["pos"]["altitude"]},
+            {point["orientation"]["x"], point["orientation"]["y"], point["orientation"]["z"], point["orientation"]["w"]},
+            std::stoi(static_cast<std::string>(point["group"]))
+        });
+    }
+    data->groups = std::vector<int>{};
+    for (const auto& group : j["data"]["groups"]) {
+        data->groups.push_back(std::stoi(static_cast<std::string>(group)));
+    }
+    data->save_dir = j["data"]["save_dir"];
+
+    m_data = std::unique_ptr<rosweb::client_requests::save_waypoints_request>(data);
+}
+
 rosweb::client_requests::client_request::~client_request() {}
 
 rosweb::client_requests::create_subscriber_request::~create_subscriber_request() {}
@@ -201,3 +238,5 @@ rosweb::client_requests::bagged_image_to_video_request::~bagged_image_to_video_r
 rosweb::client_requests::change_subscriber_request::~change_subscriber_request() {}
 
 rosweb::client_requests::toggle_pause_subscriber_request::~toggle_pause_subscriber_request() {}
+
+rosweb::client_requests::save_waypoints_request::~save_waypoints_request() {}

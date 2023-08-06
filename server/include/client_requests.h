@@ -13,6 +13,33 @@ namespace rosweb {
 
 namespace rosweb {
     namespace client_requests {
+        // To help build the requests in client_requests
+        namespace helpers {
+
+            struct NavSat {
+                double latitude;
+                double longitude;
+                double altitude;
+            };
+
+            struct Quaternion {
+                double x;
+                double y;
+                double z;
+                double w;
+            };
+
+            struct Waypoint {
+                NavSat position;
+                Quaternion orientation;
+                int group;
+            };
+        }
+    }
+}
+
+namespace rosweb {
+    namespace client_requests {
 
             struct client_request {
                 std::string operation;
@@ -58,6 +85,14 @@ namespace rosweb {
                 ~bagged_image_to_video_request();
             };
 
+            struct save_waypoints_request : client_request {
+                std::vector<helpers::Waypoint> waypoints;
+                std::vector<int> groups;
+                std::string save_dir;
+
+                ~save_waypoints_request();
+            };
+
             class client_request_handler {
                 public:
                     ~client_request_handler();
@@ -89,6 +124,8 @@ namespace rosweb {
                     void handle_incoming_toggle_pause_subscriber_request(nlohmann::json_abi_v3_11_2::json& j);
 
                     void handle_incoming_bagged_image_to_video_request(nlohmann::json_abi_v3_11_2::json& j);
+
+                    void handle_incoming_save_waypoints_request(nlohmann::json_abi_v3_11_2::json& j);
             };
     }
 }

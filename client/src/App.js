@@ -6,6 +6,7 @@ import useWebSocket from 'react-use-websocket'
 import { Box, Typography } from '@mui/material'
 import NoConnection from './components/index/NoConnection'
 import ColorFilter from './pages/color-filter'
+import Waypointing from './pages/waypointing'
 
 export const SOCKET_URL = 'ws://localhost:8083'
 
@@ -37,6 +38,7 @@ export default function App() {
 				<Route path="/" element={<Home />} />
 				<Route path="/bagged-image-to-video" element={<BaggedImageToVideo ws={ws} />} />
 				<Route path="/color-filter" element={<ColorFilter ws={ws} />} />
+				<Route path="/waypointing" element={<Waypointing ws={ws} />} />
 			</Routes>	
 		</BrowserRouter>
 	)

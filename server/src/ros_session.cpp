@@ -5,10 +5,13 @@
 #include <iostream>
 #include <fstream>
 #include <boost/variant.hpp>
+#include <dirent.h>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/serialization.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "cv_bridge/cv_bridge.h"
 #include "opencv2/opencv.hpp"
 #include "rosbag2_cpp/reader.hpp"
@@ -50,6 +53,16 @@ void rosweb::ros_session::timer_callback() {
         if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
         m_stream->add_msg(w.first, w.second);
     }
+    for (const auto& w : m_sub_wrapper.nav_sat_fix_data) {
+        if (!w.second) continue;
+        if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
+        m_stream->add_msg(w.first, w.second);
+    }
+    for (const auto& w : m_sub_wrapper.odometry_data) {
+        if (!w.second) continue;
+        if (m_sub_wrapper.paused.find(w.first) != m_sub_wrapper.paused.end()) continue;
+        m_stream->add_msg(w.first, w.second);
+    }
 
     std::string s = m_stream->stringify();
     if (!s.empty()) {
@@ -57,7 +70,7 @@ void rosweb::ros_session::timer_callback() {
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "Duration: " << duration.count() << '\n';
+    // std::cout << "Duration: " << duration.count() << '\n';
 
     m_bridge->handle_outgoing_ws_msgs(msgs);
 }
@@ -78,6 +91,8 @@ void rosweb::ros_session::handle_new_request(rosweb::server_responses::standard*
         toggle_pause_subscriber(req_handler, res);
     } else if (req_handler->get_data()->operation == "bagged_image_to_video") {
         bagged_image_to_video(req_handler, res);
+    } else if (req_handler->get_data()->operation == "save_waypoints") {
+        save_waypoints(req_handler, res);
     }
     res->set_operation(req_handler->get_data()->operation);
 
@@ -91,6 +106,12 @@ void rosweb::ros_session::reset(
     
     m_sub_wrapper.image_subs.clear();
     m_sub_wrapper.image_data.clear();
+
+    m_sub_wrapper.nav_sat_fix_subs.clear();
+    m_sub_wrapper.nav_sat_fix_data.clear();
+
+    m_sub_wrapper.odometry_subs.clear();
+    m_sub_wrapper.odometry_data.clear();
 
     m_sub_wrapper.paused.clear();
     m_sub_wrapper.types.clear();
@@ -238,6 +259,20 @@ void rosweb::ros_session::create_sub_helper(const std::string& topic_name, const
                 wrapper.image_data[topic_name] = std::move(msg);
             }
         )});
+    } else if (msg_type == "sensor_msgs/msg/NavSatFix") {
+        m_sub_wrapper.nav_sat_fix_data.insert({topic_name, std::shared_ptr<sensor_msgs::msg::NavSatFix>()});
+        m_sub_wrapper.nav_sat_fix_subs.insert({topic_name, create_subscription<sensor_msgs::msg::NavSatFix>(
+            topic_name, 10, [&wrapper = m_sub_wrapper, topic_name](sensor_msgs::msg::NavSatFix::SharedPtr msg) {
+                wrapper.nav_sat_fix_data[topic_name] = std::move(msg);
+            }
+        )});
+    } else if (msg_type == "nav_msgs/msg/Odometry") {
+        m_sub_wrapper.odometry_data.insert({topic_name, std::shared_ptr<nav_msgs::msg::Odometry>()});
+        m_sub_wrapper.odometry_subs.insert({topic_name, create_subscription<nav_msgs::msg::Odometry>(
+            topic_name, 10, [&wrapper = m_sub_wrapper, topic_name](nav_msgs::msg::Odometry::SharedPtr msg) {
+                wrapper.odometry_data[topic_name] = std::move(msg);
+            }
+        )});
     }
 }
 
@@ -246,6 +281,12 @@ void rosweb::ros_session::destroy_sub_helper(const std::string& topic_name, cons
     if (msg_type == "sensor_msgs/msg/Image") {
         m_sub_wrapper.image_subs.erase(topic_name);
         m_sub_wrapper.image_data.erase(topic_name);
+    } else if (msg_type == "sensor_msgs/msg/NavSatFix") {
+        m_sub_wrapper.nav_sat_fix_subs.erase(topic_name);
+        m_sub_wrapper.nav_sat_fix_data.erase(topic_name);
+    } else if (msg_type == "nav_msgs/msg/Odometry") {
+        m_sub_wrapper.odometry_subs.erase(topic_name);
+        m_sub_wrapper.odometry_data.erase(topic_name);
     }
 }
 
@@ -348,5 +389,107 @@ void rosweb::ros_session::bagged_image_to_video(
         rosweb::errors::show_noncritical_error("Failed to create HTML to view video.");
         std::cout << e.what() << '\n';
         return;
+    }
+}
+
+void rosweb::ros_session::save_waypoints(
+    const std::shared_ptr<rosweb::client_requests::client_request_handler>& req_handler,
+    rosweb::server_responses::standard*& res) {
+    
+    auto data = static_cast<const rosweb::client_requests::save_waypoints_request*>
+        (req_handler->get_data());
+    
+    if (!getenv("HOME")) {
+        res->set_status(500);
+        res->set_msg("Unable to find HOME directory.");
+        rosweb::errors::show_noncritical_error("No HOME directory found, cannot convert" 
+            "ROS bag to video.");
+        return;
+    }
+
+    std::string home_dir{getenv("HOME")};
+
+    try {
+        std::string dir_path = home_dir + "/" + data->save_dir; 
+
+        auto dirp = opendir(dir_path.c_str());
+        dirent* dp;
+
+        if (!dirp) {
+            throw rosweb::errors::base_error("Directory not found: " + dir_path);
+        }
+        
+        int max_num = 0;
+        while ((dp = readdir(dirp)) != nullptr) {
+            std::string name{dp->d_name};
+            if (name.length() < 7) continue; // points_
+            if (name.find("points_") == -1) continue;
+            std::size_t dot = name.find(".");
+            if (dot == -1) continue;
+            std::string num = name.substr(7, dot - 7);
+            try {
+                int n = std::stoi(num);
+                if (n > max_num) max_num = n;
+            } catch (const std::invalid_argument& e) {
+                continue;
+            }
+        }
+
+        std::string file_path = dir_path + "/points_" + std::to_string(max_num + 1) + ".yaml";
+
+        std::ofstream ofs;
+        ofs.open(file_path, std::ofstream::out | std::ofstream::trunc);
+
+        ofs << "/**:\n";
+        ofs << "\tros__parameters:\n";
+
+        std::map<int, std::string> ll_points;
+        std::map<int, std::string> orientations;
+
+        for (const auto& point : data->waypoints) {
+            std::string prefix = ", ";
+            if (ll_points.find(point.group) == ll_points.end()) {
+                ll_points[point.group] = "[]";
+                orientations[point.group] = "[]";
+                prefix = "";
+            }
+
+            std::string ll_add = prefix + "[" + 
+                std::to_string(point.position.latitude) + ", " +
+                std::to_string(point.position.longitude) + ", " + 
+                std::to_string(point.position.altitude) + "]]";
+            ll_points[point.group] = 
+                ll_points[point.group].substr(0, ll_points[point.group].length() - 1) + ll_add;
+
+            std::string orientations_add = prefix + "[" +
+                std::to_string(point.orientation.x) + ", " +
+                std::to_string(point.orientation.y) + ", " + 
+                std::to_string(point.orientation.z) + ", " +
+                std::to_string(point.orientation.w) + "]]";
+            orientations[point.group] =
+                orientations[point.group].substr(0, orientations[point.group].length() - 1) + orientations_add;
+        }
+
+        if (data->groups.size() == 1) {
+            ofs << "\t\tll_points: " << ll_points[data->groups[0]] << '\n';
+            ofs << "\t\torientations: " << orientations[data->groups[0]] << '\n';
+        } else {
+            for (auto group : data->groups) {
+                ofs << "\t\tll_points_" << std::to_string(group) << ": " << ll_points[group] << '\n';
+                ofs << "\t\torientations_" << std::to_string(group) << ": " << orientations[group] << '\n';
+            }
+        }
+
+        ofs.close();
+
+        std::cout << "Created yaml file: " << file_path << '\n';
+
+        res->set_msg("Waypoints saved to " + file_path);
+        res->set_status(200);
+    } catch (const std::exception& e) {
+        res->set_msg("Failed to save waypoints.");
+        res->set_status(500);
+        rosweb::errors::show_noncritical_error("Failed to save waypoints.");
+        std::cout << e.what() << '\n';
     }
 }

@@ -6,6 +6,8 @@
 #include <string>
 
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "./json.hpp"
 
 namespace rosweb {
@@ -14,6 +16,12 @@ namespace rosweb {
 
             void add_msg(const std::string& topic_name,
                 const sensor_msgs::msg::Image::SharedPtr msg);
+            
+            void add_msg(const std::string& topic_name,
+                const sensor_msgs::msg::NavSatFix::SharedPtr msg);
+            
+            void add_msg(const std::string& topic_name,
+                const nav_msgs::msg::Odometry::SharedPtr msg);
             
             void clear();
 

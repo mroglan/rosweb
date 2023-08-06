@@ -32,6 +32,45 @@ void rosweb::server_stream::add_msg(const std::string& topic_name,
     m_data["topics"][topic_name]["data"]["data"] = data;
 }
 
+void rosweb::server_stream::add_msg(const std::string& topic_name,
+    const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
+    
+    auto iter = m_timestamps.find(topic_name);
+    if (iter != m_timestamps.end() 
+        && iter->second == msg->header.stamp.nanosec) return;
+    
+    m_timestamps[topic_name] = msg->header.stamp.nanosec;
+
+    m_data["topics"][topic_name]["type"] = "sensor_msgs/msg/NavSatFix";
+    m_data["topics"][topic_name]["ts"] = msg->header.stamp.nanosec;
+
+    m_data["topics"][topic_name]["data"]["latitude"] = msg->latitude;
+    m_data["topics"][topic_name]["data"]["longitude"] = msg->longitude;
+    m_data["topics"][topic_name]["data"]["altitude"] = msg->altitude;
+}
+
+void rosweb::server_stream::add_msg(const std::string& topic_name,
+    const nav_msgs::msg::Odometry::SharedPtr msg) {
+
+    auto iter = m_timestamps.find(topic_name);
+    if (iter != m_timestamps.end() 
+        && iter->second == msg->header.stamp.nanosec) return;
+    
+    m_timestamps[topic_name] = msg->header.stamp.nanosec;
+
+    m_data["topics"][topic_name]["type"] = "nav_msgs/msg/Odometry";
+    m_data["topics"][topic_name]["ts"] = msg->header.stamp.nanosec;
+
+    m_data["topics"][topic_name]["data"]["pose"]["position"]["x"] = msg->pose.pose.position.x;
+    m_data["topics"][topic_name]["data"]["pose"]["position"]["y"] = msg->pose.pose.position.y;
+    m_data["topics"][topic_name]["data"]["pose"]["position"]["z"] = msg->pose.pose.position.z;
+
+    m_data["topics"][topic_name]["data"]["pose"]["orientation"]["x"] = msg->pose.pose.orientation.x;
+    m_data["topics"][topic_name]["data"]["pose"]["orientation"]["y"] = msg->pose.pose.orientation.y;
+    m_data["topics"][topic_name]["data"]["pose"]["orientation"]["z"] = msg->pose.pose.orientation.z;
+    m_data["topics"][topic_name]["data"]["pose"]["orientation"]["w"] = msg->pose.pose.orientation.w;
+}
+
 void rosweb::server_stream::clear() {
     m_data = {};
     m_data["type"] = "stream";
