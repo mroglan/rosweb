@@ -1,5 +1,5 @@
 import { Box, Grid, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BluePrimaryButton } from "../misc/buttons";
 import { ReadyState } from 'react-use-websocket'
 
@@ -7,6 +7,7 @@ export default function Export({ws, controls, setControls}) {
 
     const [dir, setDir] = useState(controls.saveDir)
     const [loading, setLoading] = useState(false)
+    const [message, setMessage] = useState({type: 'error', msg: ''})
 
     useEffect(() => {
         if (dir === controls.saveDir) return
@@ -29,13 +30,26 @@ export default function Export({ws, controls, setControls}) {
                         group: key
                     }))
                 )).flat(1),
-                groups: Object.keys(controls.waypoints),
+                groups: Object.keys(controls.waypoints).filter(key => controls.waypoints[key].length > 0),
                 save_dir: dir
             }
         }
         console.log('req', req)
         ws.sendMessage(JSON.stringify(req))
     }
+
+    useMemo(() => {
+        if (ws.readyState != ReadyState.OPEN) return
+
+        if (!ws.lastMessage) return
+
+        const msg = JSON.parse(ws.lastMessage.data)
+
+        if (msg.type !== 'response' || msg.operation !== 'save_waypoints') return
+
+        setMessage({error: msg.data.status !== 200, msg: msg.data.msg})
+        setLoading(false)
+    }, [ws.lastMessage])
 
     return (
         <Box mt={3}>
@@ -66,6 +80,12 @@ export default function Export({ws, controls, setControls}) {
                         Export
                     </BluePrimaryButton>
                 </Box>
+            </Box>
+            <Box mt={6}>
+                <Typography variant="body1" 
+                    color={message.type === 'error' ? "error" : "success.main"}>
+                    {message.msg}
+                </Typography>
             </Box>
         </Box>
     )
