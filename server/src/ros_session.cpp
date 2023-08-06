@@ -435,9 +435,56 @@ void rosweb::ros_session::save_waypoints(
             }
         }
 
-        std::cout << "Max num: " << max_num << '\n';
+        std::string file_path = dir_path + "/points_" + std::to_string(max_num + 1) + ".yaml";
 
-        res->set_msg("Waypoints saved.");
+        std::ofstream ofs;
+        ofs.open(file_path, std::ofstream::out | std::ofstream::trunc);
+
+        ofs << "/**:\n";
+        ofs << "\tros__parameters:\n";
+
+        std::map<int, std::string> ll_points;
+        std::map<int, std::string> orientations;
+
+        for (const auto& point : data->waypoints) {
+            std::string prefix = ", ";
+            if (ll_points.find(point.group) == ll_points.end()) {
+                ll_points[point.group] = "[]";
+                orientations[point.group] = "[]";
+                prefix = "";
+            }
+
+            std::string ll_add = prefix + "[" + 
+                std::to_string(point.position.latitude) + ", " +
+                std::to_string(point.position.longitude) + ", " + 
+                std::to_string(point.position.altitude) + "]]";
+            ll_points[point.group] = 
+                ll_points[point.group].substr(0, ll_points[point.group].length() - 1) + ll_add;
+
+            std::string orientations_add = prefix + "[" +
+                std::to_string(point.orientation.x) + ", " +
+                std::to_string(point.orientation.y) + ", " + 
+                std::to_string(point.orientation.z) + ", " +
+                std::to_string(point.orientation.w) + "]]";
+            orientations[point.group] =
+                orientations[point.group].substr(0, orientations[point.group].length() - 1) + orientations_add;
+        }
+
+        if (data->groups.size() == 1) {
+            ofs << "\t\tll_points: " << ll_points[data->groups[0]] << '\n';
+            ofs << "\t\torientations: " << orientations[data->groups[0]] << '\n';
+        } else {
+            for (auto group : data->groups) {
+                ofs << "\t\tll_points_" << std::to_string(group) << ": " << ll_points[group] << '\n';
+                ofs << "\t\torientations_" << std::to_string(group) << ": " << orientations[group] << '\n';
+            }
+        }
+
+        ofs.close();
+
+        std::cout << "Created yaml file: " << file_path << '\n';
+
+        res->set_msg("Waypoints saved to " + file_path);
         res->set_status(200);
     } catch (const std::exception& e) {
         res->set_msg("Failed to save waypoints.");
