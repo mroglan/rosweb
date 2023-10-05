@@ -441,7 +441,7 @@ void rosweb::ros_session::save_waypoints(
         ofs.open(file_path, std::ofstream::out | std::ofstream::trunc);
 
         ofs << "/**:\n";
-        ofs << "\tros__parameters:\n";
+        ofs << "  ros__parameters:\n";
 
         std::map<int, std::string> ll_points;
         std::map<int, std::string> orientations;
@@ -471,12 +471,12 @@ void rosweb::ros_session::save_waypoints(
         }
 
         if (data->groups.size() == 1) {
-            ofs << "\t\tll_points: " << ll_points[data->groups[0]] << '\n';
-            ofs << "\t\torientations: " << orientations[data->groups[0]] << '\n';
+            ofs << "    ll_points: " << ll_points[data->groups[0]] << '\n';
+            ofs << "    orientations: " << orientations[data->groups[0]] << '\n';
         } else {
             for (auto group : data->groups) {
-                ofs << "\t\tll_points_" << std::to_string(group) << ": " << ll_points[group] << '\n';
-                ofs << "\t\torientations_" << std::to_string(group) << ": " << orientations[group] << '\n';
+                ofs << "    ll_points_" << std::to_string(group) << ": " << ll_points[group] << '\n';
+                ofs << "    orientations_" << std::to_string(group) << ": " << orientations[group] << '\n';
             }
         }
 
