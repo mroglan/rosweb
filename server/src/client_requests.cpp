@@ -176,6 +176,9 @@ void rosweb::client_requests::client_request_handler::handle_incoming_bagged_ima
     if (j["data"]["topic_name"] == nullptr) {
         throw rosweb::errors::request_error("Missing required field data.topic_name.");
     }
+    if (j["data"]["encoding"] == nullptr) {
+        throw rosweb::errors::request_error("Missing required field data.encoding.");
+    }
 
     std::unique_lock<std::mutex> lock{m_mutex};
     m_cv.wait(lock, [&ack = m_acknowledged]{return ack;});
@@ -187,6 +190,7 @@ void rosweb::client_requests::client_request_handler::handle_incoming_bagged_ima
     data->output_name = j["data"]["output_name"];
     data->bag_path = j["data"]["bag_path"];
     data->topic_name = j["data"]["topic_name"];
+    data->encoding = j["data"]["encoding"];
     data->create_html = j["data"]["create_html"];
 
     m_data = std::unique_ptr<rosweb::client_requests::bagged_image_to_video_request>(data);

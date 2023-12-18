@@ -325,7 +325,7 @@ void rosweb::ros_session::bagged_image_to_video(
             rclcpp::SerializedMessage extracted_serialized_msg(*msg->serialized_data);
             serialization.deserialize_message(&extracted_serialized_msg, ros_msg.get());
 
-            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(ros_msg, "bgr8");
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(ros_msg, data->encoding);
             
             cv_ptrs.push_back(cv_ptr);
         }

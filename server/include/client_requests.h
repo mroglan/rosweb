@@ -80,6 +80,7 @@ namespace rosweb {
                 std::string output_name;
                 std::string bag_path;
                 std::string topic_name;
+                std::string encoding;
                 bool create_html;
 
                 ~bagged_image_to_video_request();
