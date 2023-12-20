@@ -16,3 +16,7 @@ Converts a ROS 2 bag with image data into an mp4 video.
 ### Color Filter
 
 Applies a customizable color filter to images published on a specified topic. Filter can be changed while images are playing, or the stream can be paused while the filter is tuned. Supports HSV and RGB.
+
+### Waypoint Saver
+
+Saves a series of waypoints with the option of grouping the waypoints into groups. Waypoints can then be downloaded as a YAML file. 
