@@ -8,6 +8,7 @@ export default function Main({ws}) {
     const [outputName, setOutputName] = useState('')
     const [bagPath, setBagPath] = useState('')
     const [topicName, setTopicName] = useState('')
+    const [encoding, setEncoding] = useState('bgr8')
     const [createHTML, setCreateHTML] = useState(true)
     const [loading, setLoading] = useState(false)
 
@@ -23,6 +24,10 @@ export default function Main({ws}) {
 
     const handleTopicNameChange = (e) => {
         setTopicName(e.target.value)
+    }
+
+    const handleEncodingChange = (e) => {
+        setEncoding(e.target.value)
     }
 
     const handleCreateHTMLChange = (e) => {
@@ -41,7 +46,8 @@ export default function Main({ws}) {
                 output_name: outputName || 'rosweb-output',
                 bag_path: bagPath,
                 topic_name: topicName,
-                create_html: createHTML
+                create_html: createHTML,
+                encoding
             }
         }
 
@@ -128,6 +134,21 @@ export default function Main({ws}) {
                             <Box ml={2}>
                                 <TextField value={topicName} onChange={handleTopicNameChange}
                                     disabled={loading} fullWidth />
+                            </Box>
+                        </Grid>
+                    </Grid>
+                </Box>
+                <Box mt={3}>
+                    <Grid container alignItems="center">
+                        <Grid item>
+                            <Typography variant="h6">
+                                Encoding
+                            </Typography>
+                        </Grid>
+                        <Grid item flex={1}>
+                            <Box ml={4.9}>
+                                <TextField value={encoding} onChange={handleEncodingChange}
+                                    disabled={loading} sx={{width: 100}} />
                             </Box>
                         </Grid>
                     </Grid>

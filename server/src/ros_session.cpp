@@ -325,7 +325,7 @@ void rosweb::ros_session::bagged_image_to_video(
             rclcpp::SerializedMessage extracted_serialized_msg(*msg->serialized_data);
             serialization.deserialize_message(&extracted_serialized_msg, ros_msg.get());
 
-            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(ros_msg, "bgr8");
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(ros_msg, data->encoding);
             
             cv_ptrs.push_back(cv_ptr);
         }
@@ -334,10 +334,25 @@ void rosweb::ros_session::bagged_image_to_video(
 
         cv::VideoWriter out(home_dir + "/Downloads/" + data->output_name + ".mp4", 
             cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 
-            10.0, cv_ptrs[0]->image.size());
-        
-        for (const cv_bridge::CvImagePtr& cv_ptr : cv_ptrs) {
-            out.write(cv_ptr->image);
+            30.0, cv_ptrs[0]->image.size());
+
+        double video_time = 0;
+
+        auto initial_second = (cv_ptrs[0]->header.stamp.sec) + (cv_ptrs[0]->header.stamp.nanosec / 1000000000.0);
+
+        int curr = 0;
+
+        while (curr < cv_ptrs.size() - 1) {
+            double next_time = (cv_ptrs[curr + 1]->header.stamp.sec)
+                + (cv_ptrs[curr + 1]->header.stamp.nanosec / 1000000000.0) - initial_second;
+            
+            if (next_time < video_time) {
+                curr += 1;
+            }
+
+            out.write(cv_ptrs[curr]->image);
+
+            video_time += 1.0/30.0;
         }
 
         out.release();
